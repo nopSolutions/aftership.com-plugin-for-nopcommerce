@@ -55,6 +55,9 @@ namespace Nop.Plugin.Tracking.AfterShip
         /// <returns>A url to a tracking page.</returns>
         public string GetUrl(string trackingNumber)
         {
+            if(string.IsNullOrWhiteSpace(_settings.AfterShipUsername) || _settings.AfterShipUsername.Equals("MyAfterShipUsername"))
+                return string.Format("https://track.aftership.com/{0}", trackingNumber);
+
             return string.Format("https://{0}.aftership.com/{1}", _settings.AfterShipUsername, trackingNumber);
         }
 
@@ -65,11 +68,14 @@ namespace Nop.Plugin.Tracking.AfterShip
         /// <returns>List of Shipment Events.</returns>
         public IList<ShipmentStatusEvent> GetShipmentEvents(string trackingNumber)
         {
+            if(string.IsNullOrWhiteSpace(_settings.ApiKey) || _settings.ApiKey.Equals("MyAfterShipAPIKey"))
+                return new List<ShipmentStatusEvent>();
+
             if (string.IsNullOrEmpty(trackingNumber))
                 return new List<ShipmentStatusEvent>();
 
             var connection = new ConnectionAPI(_settings.ApiKey);
-            var tracker = new AftershipAPI.Tracking(trackingNumber);
+            var tracker = new AftershipAPI.Tracking(trackingNumber) {checkpoints = new List<Checkpoint>()};
             IList<Courier> couriers;
             try
             {

@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Linq;
 using System.Web.Mvc;
-using Nop.Core;
-using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Infrastructure;
-using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Shipping;
-using Nop.Services.Stores;
 using Nop.Web.Models.Order;
 
 namespace Nop.Plugin.Tracking.AfterShip.Filters
@@ -25,8 +21,6 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
             var settingService = EngineContext.Current.Resolve<ISettingService>();
             var shipmentService = EngineContext.Current.Resolve<IShipmentService>();
             var shippingService = EngineContext.Current.Resolve<IShippingService>();
-            var storeService = EngineContext.Current.Resolve<IStoreService>();
-            var workContext = EngineContext.Current.Resolve<IWorkContext>();
             var shippingSettings = settingService.LoadSetting<ShippingSettings>();
 
             var model = filterContext.Controller.ViewData.Model as ShipmentDetailsModel;
@@ -37,8 +31,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
 
                 if (!String.IsNullOrEmpty(shipment.TrackingNumber))
                 {
-                    var storeScope = this.GetActiveStoreScopeConfiguration(storeService, workContext);
-                    var afterShipSettings = settingService.LoadSetting<AfterShipSettings>(storeScope);
+                    var afterShipSettings = settingService.LoadSetting<AfterShipSettings>();
                     var order = shipment.Order;
                     var srcm = shippingService.LoadShippingRateComputationMethodBySystemName(order.ShippingRateComputationMethodSystemName);
 
@@ -77,21 +70,6 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
                 }
             }
             base.OnResultExecuting(filterContext);
-        }
-
-        #endregion
-
-        #region Utilites
-
-        private int GetActiveStoreScopeConfiguration(IStoreService storeService, IWorkContext workContext)
-        {
-            //ensure that we have 2 (or more) stores
-            if (storeService.GetAllStores().Count < 2)
-                return 0;
-
-            var storeId = workContext.CurrentCustomer.GetAttribute<int>(SystemCustomerAttributeNames.AdminAreaStoreScopeConfiguration);
-            var store = storeService.GetStoreById(storeId);
-            return store != null ? store.Id : 0;
         }
 
         #endregion

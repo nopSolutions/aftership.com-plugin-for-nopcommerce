@@ -11,9 +11,6 @@
     <table class="adminContent">
         <tr>
             <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.ApiKey_OverrideForStore, 
-                    model => model.ApiKey, 
-                    Model.ActiveStoreScopeConfiguration)
                 @Html.NopLabelFor(model => model.ApiKey):
             </td>
             <td class="adminData">
@@ -23,9 +20,6 @@
         </tr>
         <tr>
             <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.AfterShipUsername_OverrideForStore, 
-                    model => model.AfterShipUsername, 
-                    Model.ActiveStoreScopeConfiguration)
                 @Html.NopLabelFor(model => model.AfterShipUsername):
             </td>
             <td class="adminData">
@@ -35,9 +29,6 @@
         </tr>
         <tr>
             <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.AllowCustomerNotification_OverrideForStore, 
-                    model => model.AllowCustomerNotification, 
-                    Model.ActiveStoreScopeConfiguration)
                 @Html.NopLabelFor(model => model.AllowCustomerNotification):
             </td>
             <td class="adminData">
