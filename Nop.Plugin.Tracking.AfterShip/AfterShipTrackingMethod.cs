@@ -41,7 +41,7 @@ namespace Nop.Plugin.Tracking.AfterShip
             this.AddOrUpdatePluginLocaleResource("Plugins.Tracking.AfterShip.Status.InTransit", "Carrier has accepted or picked up shipment from shipper. The shipment is on the way.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Tracking.AfterShip.Status.OutForDelivery", "Carrier is about to deliver the shipment , or it is ready to pickup.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Tracking.AfterShip.Status.AttemptFail", "Carrier attempted to deliver but failed, and usually leaves a notice and will try to delivery again.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Tracking.AfterShip.Status.Delivered", "The shipment was delivered sucessfully.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Tracking.AfterShip.Status.Delivered", "The shipment was delivered successfully.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Tracking.AfterShip.Status.Expired", "Shipment has no tracking information for 7 days since added, or has no further updates for 30 days since last update.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Tracking.AfterShip.Status.Exception", "Custom hold, undelivered, returned shipment to sender or any shipping exceptions.");
 

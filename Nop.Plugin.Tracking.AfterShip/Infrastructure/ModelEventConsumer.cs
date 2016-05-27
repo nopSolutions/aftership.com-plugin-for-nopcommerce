@@ -61,25 +61,24 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
             // Events for tracking is not yet registered. We register and save this entry in the generic attributes
             if (genericAttrs.Any(g => g.Key.Equals(SHIPMENT_NOTIFICATION_ATTRIBUTE_NAME))) return;
 
+            var order = args.Order;
+            var customer = args.Order.Customer;
+            var customerFullName = string.Format("{0} {1}", order.ShippingAddress.FirstName,
+                order.ShippingAddress.LastName).Trim();
+
+            var connection = new ConnectionAPI(_settings.ApiKey);
+            var track = new AftershipAPI.Tracking(args.TrackingNumber)
+            {
+                customerName = customerFullName,
+                orderID = string.Format("ID {0}", order.Id),
+                orderIDPath = string.Format("{0}orderdetails/{1}", _storeContext.CurrentStore.Url, order.Id)
+            };
             if (_settings.AllowCustomerNotification)
             {
-                var order = args.Order;
-                        
-                var customer = args.Order.Customer;
-                var customerFullName = string.Format("{0} {1}", order.ShippingAddress.FirstName,
-                    order.ShippingAddress.LastName).Trim();
-
-                var connection = new ConnectionAPI(_settings.ApiKey);
-                var track = new AftershipAPI.Tracking(args.TrackingNumber)
-                {
-                    emails = new List<string> {customer.Email},
-                    customerName = customerFullName,
-                    orderID = string.Format("ID {0}", order.Id),
-                    orderIDPath = string.Format("{0}orderdetails/{1}", _storeContext.CurrentStore.Url, order.Id)
-                };
-                track = connection.createTracking(track);
+                track.emails = new List<string> {customer.Email};
             }
-
+            track = connection.createTracking(track);
+            
             _genericAttributeService.InsertAttribute(new GenericAttribute
             {
                 EntityId = args.Id,
