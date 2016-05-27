@@ -8,7 +8,7 @@ using Nop.Web.Framework.Controllers;
 
 namespace Nop.Plugin.Tracking.AfterShip.Controllers
 {
-    public class TrackingAfterShipController: BasePluginController
+    public class TrackingAfterShipController : BasePluginController
     {
         #region Fields
 
@@ -43,11 +43,13 @@ namespace Nop.Plugin.Tracking.AfterShip.Controllers
             //load settings for a chosen store scope
             var storeScope = this.GetActiveStoreScopeConfiguration(_storeService, _workContext);
             var afterShipSettings = _settingService.LoadSetting<AfterShipSettings>(storeScope);
-            var model = new ConfigurationModel();
-            model.AfterShipUsername = afterShipSettings.AfterShipUsername;
-            model.AllowCustomerNotification = afterShipSettings.AllowCustomerNotification;
-            model.ApiKey = afterShipSettings.ApiKey;
-            model.ActiveStoreScopeConfiguration = storeScope;
+            var model = new ConfigurationModel
+            {
+                AfterShipUsername = afterShipSettings.AfterShipUsername,
+                AllowCustomerNotification = afterShipSettings.AllowCustomerNotification,
+                ApiKey = afterShipSettings.ApiKey,
+                ActiveStoreScopeConfiguration = storeScope
+            };
             if (storeScope > 0)
             {
                 model.AfterShipUsername_OverrideForStore = _settingService.SettingExists(afterShipSettings,
@@ -88,6 +90,9 @@ namespace Nop.Plugin.Tracking.AfterShip.Controllers
                 _settingService.SaveSetting(afterShipSettings, x => x.ApiKey, storeScope, false);
             else if (storeScope > 0)
                 _settingService.DeleteSetting(afterShipSettings, x => x.ApiKey, storeScope);
+
+            //now clear settings cache
+            _settingService.ClearCache();
 
             SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
 

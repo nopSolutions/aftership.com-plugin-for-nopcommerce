@@ -55,41 +55,39 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
 
         private void OnShipmentChange(Shipment args)
         {
-            if (!string.IsNullOrWhiteSpace(args.TrackingNumber))
+            if (string.IsNullOrWhiteSpace(args.TrackingNumber)) return;
+
+            var genericAttrs = _genericAttributeService.GetAttributesForEntity(args.Id, "Shipment");
+            // Events for tracking is not yet registered. We register and save this entry in the generic attributes
+            if (genericAttrs.Any(g => g.Key.Equals(SHIPMENT_NOTIFICATION_ATTRIBUTE_NAME))) return;
+
+            if (_settings.AllowCustomerNotification)
             {
-                var genericAttrs = _genericAttributeService.GetAttributesForEntity(args.Id, "Shipment");
-                // Events for tracking is not yet registered. We register and save this entry in the generic attributes
-                if (!genericAttrs.Any(g => g.Key.Equals(SHIPMENT_NOTIFICATION_ATTRIBUTE_NAME)))
-                {
-                    if (_settings.AllowCustomerNotification)
-                    {
-                        var order = args.Order;
+                var order = args.Order;
                         
-                        var customer = args.Order.Customer;
-                        var customerFullName = string.Format("{0} {1}", order.ShippingAddress.FirstName,
-                            order.ShippingAddress.LastName).Trim();
+                var customer = args.Order.Customer;
+                var customerFullName = string.Format("{0} {1}", order.ShippingAddress.FirstName,
+                    order.ShippingAddress.LastName).Trim();
 
-                        var connection = new ConnectionAPI(_settings.ApiKey);
-                        var track = new AftershipAPI.Tracking(args.TrackingNumber);
-                        track.emails = new List<string>();
-                        track.emails.Add(customer.Email);
-                        track.customerName = customerFullName;
-                        track.orderID = string.Format("ID {0}", order.Id);
-                        track.orderIDPath = string.Format("{0}orderdetails/{1}", _storeContext.CurrentStore.Url,
-                            order.Id);
-                        track = connection.createTracking(track);
-                    }
-
-                    _genericAttributeService.InsertAttribute(new GenericAttribute
-                    {
-                        EntityId = args.Id,
-                        Key = SHIPMENT_NOTIFICATION_ATTRIBUTE_NAME,
-                        KeyGroup = "Shipment",
-                        StoreId = 0,
-                        Value = "True"
-                    });
-                }
+                var connection = new ConnectionAPI(_settings.ApiKey);
+                var track = new AftershipAPI.Tracking(args.TrackingNumber)
+                {
+                    emails = new List<string> {customer.Email},
+                    customerName = customerFullName,
+                    orderID = string.Format("ID {0}", order.Id),
+                    orderIDPath = string.Format("{0}orderdetails/{1}", _storeContext.CurrentStore.Url, order.Id)
+                };
+                track = connection.createTracking(track);
             }
+
+            _genericAttributeService.InsertAttribute(new GenericAttribute
+            {
+                EntityId = args.Id,
+                Key = SHIPMENT_NOTIFICATION_ATTRIBUTE_NAME,
+                KeyGroup = "Shipment",
+                StoreId = 0,
+                Value = "True"
+            });
         }
 
         #endregion

@@ -12,12 +12,9 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
             if (actionDescriptor.ControllerDescriptor.ControllerType == typeof(Web.Controllers.OrderController)
                 && actionDescriptor.ActionName.Equals("ShipmentDetails"))
             {
-
                 return new[]
                 {
-                    new Filter(
-                        new AfterShipTrackerWebFilterAttribute()
-                            , FilterScope.Action, null),
+                    new Filter(new AfterShipTrackerWebFilterAttribute(), FilterScope.Action, null)
                 };
             }
 
@@ -26,9 +23,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
             {
                 return new[]
                 {
-                    new Filter(
-                        new AfterShipTrackerAdminFilterAttribute()
-                            , FilterScope.Action, null),
+                    new Filter(new AfterShipTrackerAdminFilterAttribute(), FilterScope.Action, null)
                 };
             }
 

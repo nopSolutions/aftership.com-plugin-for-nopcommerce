@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Web.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
@@ -9,9 +10,7 @@ using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Shipping;
 using Nop.Services.Stores;
-using System;
 using Nop.Core.Infrastructure;
-using Nop.Services.Logging;
 
 namespace Nop.Plugin.Tracking.AfterShip.Filters
 {

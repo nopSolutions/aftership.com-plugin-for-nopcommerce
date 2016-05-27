@@ -9,7 +9,6 @@ using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
-using Nop.Services.Logging;
 using Nop.Services.Shipping;
 using Nop.Services.Stores;
 using Nop.Web.Models.Order;

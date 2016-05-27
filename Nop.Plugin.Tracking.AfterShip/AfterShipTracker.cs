@@ -55,15 +55,13 @@ namespace Nop.Plugin.Tracking.AfterShip
         /// <returns>A url to a tracking page.</returns>
         public string GetUrl(string trackingNumber)
         {
-            string url = "https://{0}.aftership.com/{1}";
-            url = string.Format(url, _settings.AfterShipUsername, trackingNumber);
-            return url;
+            return string.Format("https://{0}.aftership.com/{1}", _settings.AfterShipUsername, trackingNumber);
         }
 
         /// <summary>
         /// Gets all events for a tracking number.
         /// </summary>
-        /// <param name="trackingNumber">The tracking number to track</param>
+        /// <param name="trackingNumber">The tracking number to track.</param>
         /// <returns>List of Shipment Events.</returns>
         public IList<ShipmentStatusEvent> GetShipmentEvents(string trackingNumber)
         {
@@ -80,7 +78,7 @@ namespace Nop.Plugin.Tracking.AfterShip
             }
             catch (Exception ex)
             {
-                _logger.Error(string.Format("Error getting tracking information on Aftership events - {0}", trackingNumber), new Exception(ex.Message));
+                _logger.Error(string.Format("Error getting tracking information on Aftership events - {0}", trackingNumber), ex);
                 return new List<ShipmentStatusEvent>();
             }
 
@@ -91,7 +89,7 @@ namespace Nop.Plugin.Tracking.AfterShip
             else
             {
                 //if the code could not determine the carrier by the tracking number 
-                //then method will return empty collection.
+                //then method will return empty collection
                 return new List<ShipmentStatusEvent>();
             }
 
@@ -102,11 +100,13 @@ namespace Nop.Plugin.Tracking.AfterShip
             {
                 var checkpointCountryIso3Code = checkpoint.countryISO3.ToString();
                 var country = _countryService.GetCountryByThreeLetterIsoCode(checkpointCountryIso3Code);
-                var shipmentStatus = new ShipmentStatusEvent();
-                shipmentStatus.CountryCode = country.TwoLetterIsoCode;
-                shipmentStatus.Date = Convert.ToDateTime(checkpoint.checkpointTime);
-                shipmentStatus.EventName = String.Format("{0} ({1})", checkpoint.message, GetStatus(checkpoint));
-                shipmentStatus.Location = checkpoint.city;
+                var shipmentStatus = new ShipmentStatusEvent
+                {
+                    CountryCode = country.TwoLetterIsoCode,
+                    Date = Convert.ToDateTime(checkpoint.checkpointTime),
+                    EventName = String.Format("{0} ({1})", checkpoint.message, GetStatus(checkpoint)),
+                    Location = checkpoint.city
+                };
                 //other properties (not used yet)
                 //checkpoint.checkpointTime;
                 //checkpoint.countryName;
