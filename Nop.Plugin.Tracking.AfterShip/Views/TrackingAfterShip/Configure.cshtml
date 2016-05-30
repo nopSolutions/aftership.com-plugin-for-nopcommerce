@@ -3,8 +3,6 @@
 }
 @model Nop.Plugin.Tracking.AfterShip.Models.ConfigurationModel
 @using Nop.Web.Framework;
-
-@Html.Action("StoreScopeConfiguration", "Setting", new { area = "Admin" })
 @using (Html.BeginForm())
 {
     @Html.AntiForgeryToken()

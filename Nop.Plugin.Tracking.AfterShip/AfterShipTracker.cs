@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using AftershipAPI;
 using Nop.Core;
 using Nop.Core.Infrastructure;
@@ -99,30 +100,38 @@ namespace Nop.Plugin.Tracking.AfterShip
                 return new List<ShipmentStatusEvent>();
             }
 
-            tracker = connection.getTrackingByNumber(tracker);
             var shipmentStatusList = new List<ShipmentStatusEvent>();
-            if (tracker.checkpoints != null)
+            try
             {
-                foreach (var checkpoint in tracker.checkpoints)
+                tracker = connection.getTrackingByNumber(tracker);
+                if (tracker.checkpoints != null)
                 {
-                    var checkpointCountryIso3Code = checkpoint.countryISO3.ToString();
-                    var country = _countryService.GetCountryByThreeLetterIsoCode(checkpointCountryIso3Code);
-                    var shipmentStatus = new ShipmentStatusEvent
+                    foreach (var checkpoint in tracker.checkpoints)
                     {
-                        CountryCode = country.TwoLetterIsoCode,
-                        Date = Convert.ToDateTime(checkpoint.checkpointTime),
-                        EventName = String.Format("{0} ({1})", checkpoint.message, GetStatus(checkpoint)),
-                        Location = checkpoint.city
-                    };
-                    //other properties (not used yet)
-                    //checkpoint.checkpointTime;
-                    //checkpoint.countryName;
-                    //checkpoint.state;
-                    //checkpoint.zip;
+                        var checkpointCountryIso3Code = checkpoint.countryISO3.ToString();
+                        var country = _countryService.GetCountryByThreeLetterIsoCode(checkpointCountryIso3Code);
+                        var shipmentStatus = new ShipmentStatusEvent
+                        {
+                            CountryCode = country.TwoLetterIsoCode,
+                            Date = Convert.ToDateTime(checkpoint.checkpointTime),
+                            EventName = String.Format("{0} ({1})", checkpoint.message, GetStatus(checkpoint)),
+                            Location = checkpoint.city
+                        };
+                        //other properties (not used yet)
+                        //checkpoint.checkpointTime;
+                        //checkpoint.countryName;
+                        //checkpoint.state;
+                        //checkpoint.zip;
 
-                    shipmentStatusList.Add(shipmentStatus);
+                        shipmentStatusList.Add(shipmentStatus);
+                    }
                 }
             }
+            catch (WebException ex)
+            {
+                _logger.Error(string.Format("Error getting tracking information on Aftership events - {0}", trackingNumber));
+            }
+            
             return shipmentStatusList;
         }
 
