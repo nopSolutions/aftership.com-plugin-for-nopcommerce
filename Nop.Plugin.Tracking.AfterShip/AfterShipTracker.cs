@@ -56,7 +56,7 @@ namespace Nop.Plugin.Tracking.AfterShip
         /// <returns>A url to a tracking page.</returns>
         public string GetUrl(string trackingNumber)
         {
-            if(string.IsNullOrWhiteSpace(_settings.AfterShipUsername) || _settings.AfterShipUsername.Equals("MyAfterShipUsername"))
+            if (string.IsNullOrWhiteSpace(_settings.AfterShipUsername) || _settings.AfterShipUsername.Equals("MyAfterShipUsername"))
                 return string.Format("https://track.aftership.com/{0}", trackingNumber);
 
             return string.Format("https://{0}.aftership.com/{1}", _settings.AfterShipUsername, trackingNumber);
@@ -69,7 +69,7 @@ namespace Nop.Plugin.Tracking.AfterShip
         /// <returns>List of Shipment Events.</returns>
         public IList<ShipmentStatusEvent> GetShipmentEvents(string trackingNumber)
         {
-            if(string.IsNullOrWhiteSpace(_settings.ApiKey) || _settings.ApiKey.Equals("MyAfterShipAPIKey"))
+            if (string.IsNullOrWhiteSpace(_settings.ApiKey) || _settings.ApiKey.Equals("MyAfterShipAPIKey"))
                 return new List<ShipmentStatusEvent>();
 
             if (string.IsNullOrEmpty(trackingNumber))
@@ -77,35 +77,28 @@ namespace Nop.Plugin.Tracking.AfterShip
 
             var connection = new ConnectionAPI(_settings.ApiKey);
             var tracker = new AftershipAPI.Tracking(trackingNumber);
-            IList<Courier> couriers;
-            try
-            {
-                //use try-catch to ensure exception won't be thrown is web service is not available
-                couriers = connection.detectCouriers(trackingNumber);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(string.Format("Error getting tracking information on Aftership events - {0}", trackingNumber), ex);
-                return new List<ShipmentStatusEvent>();
-            }
-
-            if (couriers.Count == 1)
-            {
-                tracker.slug = couriers.First().slug;
-            }
-            else
-            {
-                //if the code could not determine the carrier by the tracking number 
-                //then method will return empty collection
-                return new List<ShipmentStatusEvent>();
-            }
-
+            IList<Courier> couriers = null;
             var shipmentStatusList = new List<ShipmentStatusEvent>();
             try
             {
-                tracker = connection.getTrackingByNumber(tracker);
-                if (tracker.checkpoints != null)
+                //use try-catch to ensure exception won't be thrown is web service is not available
+                couriers = connection.detectCouriers(trackingNumber, null, null, null, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Error getting couriers information on Aftership", ex);
+            }
+
+            if (couriers == null) return shipmentStatusList;
+
+            foreach (var courier in couriers)
+            {
+                try
                 {
+                    tracker.slug = courier.slug;
+                    tracker = connection.getTrackingByNumber(tracker);
+                    if (!tracker.checkpoints.Any()) continue;
+
                     foreach (var checkpoint in tracker.checkpoints)
                     {
                         var checkpointCountryIso3Code = checkpoint.countryISO3.ToString();
@@ -125,13 +118,15 @@ namespace Nop.Plugin.Tracking.AfterShip
 
                         shipmentStatusList.Add(shipmentStatus);
                     }
+                    break;
+                }
+                catch (WebException)
+                {
+                    _logger.Error(string.Format("Error getting tracking information on Aftership events - {0}",
+                        trackingNumber));
                 }
             }
-            catch (WebException ex)
-            {
-                _logger.Error(string.Format("Error getting tracking information on Aftership events - {0}", trackingNumber));
-            }
-            
+
             return shipmentStatusList;
         }
 
