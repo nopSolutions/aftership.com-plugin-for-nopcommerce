@@ -66,48 +66,8 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
 
         private void OnShipmentInsert(Shipment args)
         {
-            if (string.IsNullOrWhiteSpace(args.TrackingNumber)) return;
-            var connection = new ConnectionAPI(_settings.ApiKey);
-            var order = args.Order;
-            var customer = args.Order.Customer;
-            var customerFullName = string.Format("{0} {1}", order.ShippingAddress.FirstName,
-                order.ShippingAddress.LastName).Trim();
-
-            //create the new tracker
-            var track = new AftershipAPI.Tracking(args.TrackingNumber)
-            {
-                customerName = customerFullName,
-                orderID = string.Format("ID {0}", order.Id),
-                orderIDPath = string.Format("{0}orderdetails/{1}", _storeContext.CurrentStore.Url, order.Id)
-            };
-            if (_settings.AllowCustomerNotification)
-            {
-                track.emails = new List<string> { customer.Email };
-            }
-            try
-            {
-                connection.createTracking(track);
-                _genericAttributeService.InsertAttribute(new GenericAttribute
-                {
-                    EntityId = args.Id,
-                    Key = SHIPMENT_NOTIFICATION_ATTRIBUTE_NAME,
-                    KeyGroup = "Shipment",
-                    StoreId = 0,
-                    Value = "True"
-                });
-                _genericAttributeService.InsertAttribute(new GenericAttribute
-                {
-                    EntityId = args.Id,
-                    Key = SHIPMENT_TRACK_NUMBER_ATTRIBUTE_NAME,
-                    KeyGroup = "Shipment",
-                    StoreId = 0,
-                    Value = args.TrackingNumber
-                });
-            }
-            catch (WebException ex)
-            {
-                _logger.Error(string.Format("Cannot resolve registration tracker with number - {0}", args.TrackingNumber), new Exception(ex.Message));
-            }
+            if (!string.IsNullOrEmpty(args.TrackingNumber))
+                CreateTracking(args);
         }
 
         private void OnShipmentChange(Shipment args)
@@ -118,38 +78,39 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
             // Events for tracking is not yet registered. We register and save this entry in the generic attributes
             if (genericAttrs.Any(g => g.Value.Equals(args.TrackingNumber))) return;
 
-            var connection = new ConnectionAPI(_settings.ApiKey);
-            var order = args.Order;
-            var customer = args.Order.Customer;
-            var customerFullName = string.Format("{0} {1}", order.ShippingAddress.FirstName,
-                order.ShippingAddress.LastName).Trim();
-
             //remove the old tracker
             var oldTrackAttr = genericAttrs.First(g => g.Key.Equals(SHIPMENT_TRACK_NUMBER_ATTRIBUTE_NAME));
             if (oldTrackAttr != null && !oldTrackAttr.Value.Equals(args.TrackingNumber))
             {
-                var couriers = connection.detectCouriers(oldTrackAttr.Value);
-                foreach (var courier in couriers)
+                if (RemoveTracking(args.TrackingNumber))
                 {
-                    var oldTracker = new AftershipAPI.Tracking(oldTrackAttr.Value);
-                    oldTracker.slug = courier.slug;
-                    try
+                    foreach (var genericAttribute in genericAttrs)
                     {
-                        var deleted = connection.deleteTracking(oldTracker);
-                        foreach (var genericAttribute in genericAttrs)
-                            _genericAttributeService.DeleteAttribute(genericAttribute);
-                        if(deleted)
-                            break;
-                    }
-                    catch (WebException ex)
-                    {
-                        _logger.Warning(string.Format("Cannot delete tracker with number - {0} and courier name - {1}", 
-                            oldTrackAttr.Value, courier.name), new Exception(ex.Message));
+                        _genericAttributeService.DeleteAttribute(genericAttribute);
                     }
                 }
             }
-            //create the new tracker
-            var track = new AftershipAPI.Tracking(args.TrackingNumber)
+
+            //create the new tracking in Aftarship
+            CreateTracking(args);
+        }
+
+        private void OnShipmentDeleted(Shipment args)
+        {
+            if (!string.IsNullOrEmpty(args.TrackingNumber))
+                RemoveTracking(args.TrackingNumber);
+        }
+
+        private void CreateTracking(Shipment shipment)
+        {
+            var connection = new ConnectionAPI(_settings.ApiKey);
+            var order = shipment.Order;
+            var customer = shipment.Order.Customer;
+            var customerFullName = string.Format("{0} {1}", order.ShippingAddress.FirstName,
+                order.ShippingAddress.LastName).Trim();
+
+            //create the new tracking
+            var track = new AftershipAPI.Tracking(shipment.TrackingNumber)
             {
                 customerName = customerFullName,
                 orderID = string.Format("ID {0}", order.Id),
@@ -164,7 +125,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
                 connection.createTracking(track);
                 _genericAttributeService.InsertAttribute(new GenericAttribute
                 {
-                    EntityId = args.Id,
+                    EntityId = shipment.Id,
                     Key = SHIPMENT_NOTIFICATION_ATTRIBUTE_NAME,
                     KeyGroup = "Shipment",
                     StoreId = 0,
@@ -172,33 +133,42 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
                 });
                 _genericAttributeService.InsertAttribute(new GenericAttribute
                 {
-                    EntityId = args.Id,
+                    EntityId = shipment.Id,
                     Key = SHIPMENT_TRACK_NUMBER_ATTRIBUTE_NAME,
                     KeyGroup = "Shipment",
                     StoreId = 0,
-                    Value = args.TrackingNumber
+                    Value = shipment.TrackingNumber
                 });
             }
             catch (WebException ex)
             {
-                _logger.Error(string.Format("Cannot registration tracker with number - {0}", 
-                    args.TrackingNumber), new Exception(ex.Message));
+                _logger.Error(string.Format("Cannot registration tracking with number - {0}",
+                    shipment.TrackingNumber), new Exception(ex.Message));
             }
         }
 
-        private void OnShipmentDeleted(Shipment args)
+        private bool RemoveTracking(string trackingNumber)
         {
+            bool result = false;
             try
             {
                 var connection = new ConnectionAPI(_settings.ApiKey);
-                var track = new AftershipAPI.Tracking(args.TrackingNumber);
-                connection.deleteTracking(track);
+                var track = new AftershipAPI.Tracking(trackingNumber);
+                var couriers = connection.detectCouriers(trackingNumber);
+                foreach (var courier in couriers)
+                {
+                    track.slug = courier.slug;
+                    result = connection.deleteTracking(track);
+                    if(result)
+                        break;
+                }
             }
             catch (WebException ex)
             {
-                _logger.Warning(string.Format("Cannot delete tracker with number - {0}", 
-                    args.TrackingNumber), new Exception(ex.Message));
+                _logger.Warning(string.Format("Cannot delete tracking with number - {0}",
+                    trackingNumber), new Exception(ex.Message));
             }
+            return result;
         }
         
         #endregion

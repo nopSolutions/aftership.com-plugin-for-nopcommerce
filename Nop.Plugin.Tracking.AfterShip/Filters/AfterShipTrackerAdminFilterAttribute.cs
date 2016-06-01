@@ -2,11 +2,11 @@
 using System.Linq;
 using System.Web.Mvc;
 using Nop.Core.Domain.Shipping;
+using Nop.Core.Infrastructure;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Shipping;
-using Nop.Core.Infrastructure;
 
 namespace Nop.Plugin.Tracking.AfterShip.Filters
 {
