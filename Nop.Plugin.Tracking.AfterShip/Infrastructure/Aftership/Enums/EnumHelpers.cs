@@ -39,12 +39,13 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership.Enums
 
         public static Iso3Country ToIso3Enum(this string value)
         {
-            var enumValArray = Enum.GetValues(typeof (Iso3Country));
+            var enumValArray = Enum.GetValues(typeof(Iso3Country));
             foreach (int val in enumValArray)
             {
-                if (((Iso3Country) val).GetIso3Code().Equals(value, StringComparison.CurrentCultureIgnoreCase))
-                    return (Iso3Country) val;
+                if (((Iso3Country)val).GetIso3Code().Equals(value, StringComparison.CurrentCultureIgnoreCase))
+                    return (Iso3Country)val;
             }
+
             return Iso3Country.Null;
         }
     }

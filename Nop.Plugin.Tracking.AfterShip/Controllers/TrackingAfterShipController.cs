@@ -17,11 +17,12 @@ namespace Nop.Plugin.Tracking.AfterShip.Controllers
 
         #region Ctor
 
-        public TrackingAfterShipController(ISettingService settingService,
+        public TrackingAfterShipController(
+            ISettingService settingService,
             ILocalizationService localizationService)
         {
-            _settingService = settingService;
-            _localizationService = localizationService;
+            this._settingService = settingService;
+            this._localizationService = localizationService;
         }
 
         #endregion
@@ -32,7 +33,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Controllers
         [ChildActionOnly]
         public ActionResult Configure()
         {
-            var afterShipSettings = _settingService.LoadSetting<AfterShipSettings>();
+            var afterShipSettings = this._settingService.LoadSetting<AfterShipSettings>();
             var model = new ConfigurationModel
             {
                 AfterShipUsername = afterShipSettings.AfterShipUsername,

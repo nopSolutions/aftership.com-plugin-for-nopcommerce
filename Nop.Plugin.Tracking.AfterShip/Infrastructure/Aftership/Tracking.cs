@@ -1,4 +1,9 @@
-﻿using System;
+﻿/* 
+ * This code is taken form AfterShip's GitHub (https://github.com/AfterShip/aftership-sdk-net)
+ * and slightly modified for our coding standards. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
@@ -7,8 +12,8 @@ using Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership.Enums;
 namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
 {
     /// <summary>
-	/// Tracking. Keep instances of trackings
-	/// </summary>
+    /// Tracking. Keep instances of trackings
+    /// </summary>
     public class Tracking
     {
         #region Fields
@@ -176,7 +181,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
 
             if (trackingJson["updated_at"] != null)
             {
-                if(!DateTime.TryParse(trackingJson["updated_at"].ToString(), out _updatedAt))
+                if (!DateTime.TryParse(trackingJson["updated_at"].ToString(), out _updatedAt))
                     _updatedAt = DateTime.MinValue;
             }
             else
@@ -244,158 +249,6 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
             {
                 _checkpoints.Add(new Checkpoint((JObject)token));
             }
-        }
-
-        #endregion
-
-        #region Methods
-
-        public void AddEmails(params string[] emails)
-        {
-            foreach (var email in emails)
-            {
-                _emails.Add(email);
-            }
-        }
-
-        public void DeleteEmail(string email)
-        {
-            _emails.Remove(email);
-        }
-
-        public void AddPhones(params string[] phones)
-        {
-            foreach (var phone in phones)
-            {
-                _phones.Add(phone);
-            }
-        }
-
-        public void DeletePhone(string phone)
-        {
-            _phones.Remove(phone);
-        }
-
-        public void AddCustomFields(string field, string value)
-        {
-            if (_customFields == null)
-            {
-                _customFields = new Dictionary<string, string>();
-            }
-            CustomFields.Add(field, value);
-        }
-
-        public void DeleteCustomFields(string field)
-        {
-            if (CustomFields != null)
-            {
-                CustomFields.Remove(field);
-            }
-        }
-
-        public string GetJsonPost()
-        {
-            var trackingJson = new JObject { { "tracking_number", new JValue(_trackingNumber) } };
-            if (_slug != null) trackingJson.Add("slug", new JValue(_slug));
-            if (_title != null) trackingJson.Add("title", new JValue(_title));
-            if (_emails != null)
-            {
-                var emailsJson = new JArray(_emails);
-                trackingJson["emails"] = emailsJson;
-            }
-            if (_phones != null)
-            {
-                var phonesJson = new JArray(_phones);
-                trackingJson["smses"] = phonesJson;
-            }
-            if (_customerName != null) trackingJson.Add("customer_name", new JValue(_customerName));
-            if (_destinationCountryIso3 != 0) trackingJson.Add("destination_country_iso3", new JValue(_destinationCountryIso3.ToString()));
-            if (_orderId != null) trackingJson.Add("order_id", new JValue(_orderId));
-            if (_orderIdPath != null) trackingJson.Add("order_id_path", new JValue(_orderIdPath));
-            if (_trackingAccountNumber != null) trackingJson.Add("tracking_account_number", new JValue(_trackingAccountNumber));
-            if (_trackingPostalCode != null) trackingJson.Add("tracking_postal_code", new JValue(TrackingPostalCode));
-            if (_trackingShipDate != null) trackingJson.Add("tracking_ship_date", new JValue(TrackingShipDate));
-
-            if (_customFields != null)
-            {
-                var customFieldsJson = new JObject();
-                foreach (var pair in _customFields)
-                {
-                    customFieldsJson.Add(pair.Key, new JValue(pair.Value));
-                }
-
-                trackingJson["custom_fields"] = customFieldsJson;
-            }
-
-            var globalJson = new JObject { ["tracking"] = trackingJson };
-
-            return globalJson.ToString();
-        }
-
-
-        public string GeneratePutJson()
-        {
-            var globalJson = new JObject();
-            var trackingJson = new JObject();
-
-            if (_title != null) trackingJson.Add("title", new JValue(_title));
-            if (_emails != null && _emails.Any())
-            {
-                var emailsJson = new JArray(_emails);
-                trackingJson["emails"] = emailsJson;
-            }
-            if (_phones != null && _phones.Any())
-            {
-                var phonesJson = new JArray(_phones);
-                trackingJson["smses"] = phonesJson;
-            }
-            if (_customerName != null) trackingJson.Add("customer_name", new JValue(_customerName));
-            if (_orderId != null) trackingJson.Add("order_id", new JValue(_orderId));
-            if (_orderIdPath != null) trackingJson.Add("order_id_path", new JValue(_orderIdPath));
-            if (_customFields != null)
-            {
-                var customFieldsJson = new JObject();
-
-                foreach (var pair in _customFields)
-                {
-                    customFieldsJson.Add(pair.Key, new JValue(pair.Value));
-                }
-                trackingJson["custom_fields"] = customFieldsJson;
-            }
-            globalJson["tracking"] = trackingJson;
-
-            return globalJson.ToString();
-        }
-
-        public string GetQueryRequiredFields()
-        {
-            var containsInfo = false;
-            var qs = new QueryString();
-
-            if (_trackingAccountNumber != null)
-            {
-                containsInfo = true;
-                qs.Add("tracking_account_number", _trackingAccountNumber);
-            }
-
-            if (_trackingPostalCode != null)
-            {
-                qs.Add("tracking_postal_code", _trackingPostalCode);
-                containsInfo = true;
-            }
-
-            if (_trackingShipDate != null)
-            {
-                qs.Add("tracking_ship_date", _trackingShipDate);
-                containsInfo = true;
-            }
-
-            return containsInfo ? qs.ToString() : "";
-        }
-
-        public override string ToString()
-        {
-            return string.Format("_id: {0} \n_trackingNumber: {1} \n_slug: {2}", _id, _trackingNumber, _slug);
         }
 
         #endregion
@@ -562,6 +415,164 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
         {
             get { return _checkpoints; }
             set { _checkpoints = value; }
+        }
+
+        #endregion
+
+        #region Methods
+
+        public void AddEmails(params string[] emails)
+        {
+            foreach (var email in emails)
+            {
+                _emails.Add(email);
+            }
+        }
+
+        public void DeleteEmail(string email)
+        {
+            _emails.Remove(email);
+        }
+
+        public void AddPhones(params string[] phones)
+        {
+            foreach (var phone in phones)
+            {
+                _phones.Add(phone);
+            }
+        }
+
+        public void DeletePhone(string phone)
+        {
+            _phones.Remove(phone);
+        }
+
+        public void AddCustomFields(string field, string value)
+        {
+            if (_customFields == null)
+            {
+                _customFields = new Dictionary<string, string>();
+            }
+
+            CustomFields.Add(field, value);
+        }
+
+        public void DeleteCustomFields(string field)
+        {
+            if (CustomFields != null)
+            {
+                CustomFields.Remove(field);
+            }
+        }
+
+        public string GetJsonPost()
+        {
+            var trackingJson = new JObject { { "tracking_number", new JValue(_trackingNumber) } };
+            if (_slug != null) trackingJson.Add("slug", new JValue(_slug));
+            if (_title != null) trackingJson.Add("title", new JValue(_title));
+            if (_emails != null)
+            {
+                var emailsJson = new JArray(_emails);
+                trackingJson["emails"] = emailsJson;
+            }
+
+            if (_phones != null)
+            {
+                var phonesJson = new JArray(_phones);
+                trackingJson["smses"] = phonesJson;
+            }
+
+            if (_customerName != null) trackingJson.Add("customer_name", new JValue(_customerName));
+            if (_destinationCountryIso3 != 0) trackingJson.Add("destination_country_iso3", new JValue(_destinationCountryIso3.ToString()));
+            if (_orderId != null) trackingJson.Add("order_id", new JValue(_orderId));
+            if (_orderIdPath != null) trackingJson.Add("order_id_path", new JValue(_orderIdPath));
+            if (_trackingAccountNumber != null) trackingJson.Add("tracking_account_number", new JValue(_trackingAccountNumber));
+            if (_trackingPostalCode != null) trackingJson.Add("tracking_postal_code", new JValue(TrackingPostalCode));
+            if (_trackingShipDate != null) trackingJson.Add("tracking_ship_date", new JValue(TrackingShipDate));
+
+            if (_customFields != null)
+            {
+                var customFieldsJson = new JObject();
+                foreach (var pair in _customFields)
+                {
+                    customFieldsJson.Add(pair.Key, new JValue(pair.Value));
+                }
+
+                trackingJson["custom_fields"] = customFieldsJson;
+            }
+
+            var globalJson = new JObject { ["tracking"] = trackingJson };
+
+            return globalJson.ToString();
+        }
+
+        public string GeneratePutJson()
+        {
+            var globalJson = new JObject();
+            var trackingJson = new JObject();
+
+            if (_title != null) trackingJson.Add("title", new JValue(_title));
+            if (_emails != null && _emails.Any())
+            {
+                var emailsJson = new JArray(_emails);
+                trackingJson["emails"] = emailsJson;
+            }
+
+            if (_phones != null && _phones.Any())
+            {
+                var phonesJson = new JArray(_phones);
+                trackingJson["smses"] = phonesJson;
+            }
+
+            if (_customerName != null) trackingJson.Add("customer_name", new JValue(_customerName));
+            if (_orderId != null) trackingJson.Add("order_id", new JValue(_orderId));
+            if (_orderIdPath != null) trackingJson.Add("order_id_path", new JValue(_orderIdPath));
+            if (_customFields != null)
+            {
+                var customFieldsJson = new JObject();
+
+                foreach (var pair in _customFields)
+                {
+                    customFieldsJson.Add(pair.Key, new JValue(pair.Value));
+                }
+
+                trackingJson["custom_fields"] = customFieldsJson;
+            }
+
+            globalJson["tracking"] = trackingJson;
+
+            return globalJson.ToString();
+        }
+
+        public string GetQueryRequiredFields()
+        {
+            var containsInfo = false;
+            var qs = new QueryString();
+
+            if (_trackingAccountNumber != null)
+            {
+                containsInfo = true;
+                qs.Add("tracking_account_number", _trackingAccountNumber);
+            }
+
+            if (_trackingPostalCode != null)
+            {
+                qs.Add("tracking_postal_code", _trackingPostalCode);
+                containsInfo = true;
+            }
+
+            if (_trackingShipDate != null)
+            {
+                qs.Add("tracking_ship_date", _trackingShipDate);
+                containsInfo = true;
+            }
+
+            return containsInfo ? qs.ToString() : string.Empty;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("_id: {0} \n_trackingNumber: {1} \n_slug: {2}", _id, _trackingNumber, _slug);
         }
 
         #endregion

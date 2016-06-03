@@ -27,7 +27,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
             if (model != null && !model.ShipmentStatusEvents.Any())
             {
                 var shipment = shipmentService.GetShipmentById(model.Id);
-                if (!String.IsNullOrEmpty(shipment.TrackingNumber))
+                if (!string.IsNullOrEmpty(shipment.TrackingNumber))
                 {
                     var afterShipSettings = settingService.LoadSetting<AfterShipSettings>();
                     var order = shipment.Order;
@@ -62,6 +62,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
                                         model.ShipmentStatusEvents.Add(shipmentStatusEventModel);
                                     }
                                 }
+
                                 filterContext.Controller.ViewData.Model = model;
                             }
                         }

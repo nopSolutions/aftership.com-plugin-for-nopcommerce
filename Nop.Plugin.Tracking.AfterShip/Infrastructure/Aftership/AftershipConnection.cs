@@ -1,4 +1,9 @@
-﻿using System;
+﻿/* 
+ * This code is taken form AfterShip's GitHub (https://github.com/AfterShip/aftership-sdk-net)
+ * and slightly modified for our coding standards. 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,17 +14,17 @@ using Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership.Enums;
 namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
 {
     /// <summary>
-	/// Connection API. Connect with the API of Afthership
-	/// </summary>
+    /// Connection API. Connect with the API of Afthership
+    /// </summary>
     public class AftershipConnection
     {
         #region Fields
 
-        private readonly string _tokenAftership;
-        private readonly string _url;
-
         private static string URL_SERVER = "https://api.aftership.com/";
         private static string VERSION_API = "v4";
+
+        private readonly string _tokenAftership;
+        private readonly string _url;
 
         #endregion
 
@@ -61,7 +66,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
             else
             {
                 var paramRequiredFields = ReplaceFirst(tracking.GetQueryRequiredFields(), "&", "?");
-                parametersExtra = string.Format("{0}/{1}{2}",tracking.Slug, tracking.TrackingNumber, paramRequiredFields);
+                parametersExtra = string.Format("{0}/{1}{2}", tracking.Slug, tracking.TrackingNumber, paramRequiredFields);
             }
 
             var response = Request("PUT", string.Format("/trackings/{0}", parametersExtra), tracking.GeneratePutJson());
@@ -86,7 +91,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
             else
             {
                 var paramRequiredFields = ReplaceFirst(tracking.GetQueryRequiredFields(), "&", "?");
-                parametersExtra = string.Format("{0}/{1}{2}",tracking.Slug, tracking.TrackingNumber, paramRequiredFields);
+                parametersExtra = string.Format("{0}/{1}{2}", tracking.Slug, tracking.TrackingNumber, paramRequiredFields);
             }
 
             var response = Request("GET", string.Format("/last_checkpoint/{0}", parametersExtra), null);
@@ -117,13 +122,13 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
             Checkpoint checkpoint = null;
 
             if (fields != null) qs.Add("fields", fields.Select(f => f.GetName()));
-            if (lang != null && !lang.Equals("")) qs.Add("lang", lang);
+            if (string.IsNullOrEmpty(lang)) qs.Add("lang", lang);
 
             var parameters = ReplaceFirst(qs.ToString(), "&", "?");
             
             if (!string.IsNullOrEmpty(tracking.Id))
             {
-                parametersExtra = string.Format("{0}{1}",tracking.Id, parameters);
+                parametersExtra = string.Format("{0}{1}", tracking.Id, parameters);
             }
             else
             {
@@ -148,9 +153,10 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
         public bool Retrack(Tracking tracking)
         {
             var paramRequiredFields = ReplaceFirst(tracking.GetQueryRequiredFields(), "&", "?");
-            var response = Request("POST",
-                string.Format("/trackings/{0}/{1}/retrack{2}", tracking.Slug, tracking.TrackingNumber,
-                    paramRequiredFields), null);
+            var response = Request(
+                "POST",
+                string.Format("/trackings/{0}/{1}/retrack{2}", tracking.Slug, tracking.TrackingNumber, paramRequiredFields), 
+                null);
 
             if ((int)response["meta"]["code"] == 200)
             {
@@ -169,11 +175,14 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
         {
             IList<Tracking> trackingList = null;
 
-            var response = Request("GET", string.Format("/trackings?limit=100&page={0}", page), null);
+            var response = Request(
+                "GET", 
+                string.Format("/trackings?limit=100&page={0}", page), 
+                null);
             var trackingJson = (JArray)response["data"]["trackings"];
             if (trackingJson.Count != 0)
             {
-                trackingList = trackingJson.Select(t => new Tracking((JObject) t)).ToList();
+                trackingList = trackingJson.Select(t => new Tracking((JObject)t)).ToList();
             }
 
             return trackingList;
@@ -197,11 +206,12 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
                 {
                     trackingList.Add(new Tracking((JObject)token));
                 }
+
                 parameters.Total = size;
             }
+
             return trackingList;
         }
-
 
         /// <summary>
         /// Return a list of couriers supported by AfterShip along with their names, URLs and slugs.
@@ -219,6 +229,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
                 var newCourier = new Courier(element);
                 couriers.Add(newCourier);
             }
+
             return couriers;
         }
 
@@ -273,7 +284,6 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
             return couriers;
         }
 
-
         /// <summary>
         /// Get a list of matched couriers for a tracking number based on the tracking number format Note, only check the couriers you have defined in your account
         /// Note, only check the couriers you have defined in your account.
@@ -290,8 +300,12 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
         /// </param>
         /// <param name="slugs">The slug of couriers to detect.</param>
         /// <returns>A List of Couriers objects that match the provided trackingNumber.</returns>
-        public IList<Courier> DetectCouriers(string trackingNumber, string trackingPostalCode, string trackingShipDate,
-            string trackingAccountNumber, params string[] slugs)
+        public IList<Courier> DetectCouriers(
+            string trackingNumber, 
+            string trackingPostalCode, 
+            string trackingShipDate,
+            string trackingAccountNumber, 
+            params string[] slugs)
         {
             var body = new JObject();
             var tracking = new JObject();
@@ -328,6 +342,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
                 var newCourier = new Courier(element);
                 couriers.Add(newCourier);
             }
+
             return couriers;
         }
 
@@ -344,7 +359,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
 
         /// <summary>
         /// A Tracking object with the information to creates
-        ///	The field trackingNumber SHOULD be informed, otherwise an exception will be thrown
+        /// The field trackingNumber SHOULD be informed, otherwise an exception will be thrown
         /// The fields an user can add are: Slug, Phones, Emails, Title, CustomerName, OrderId, OrderIdPath,
         /// CustomFields, DestinationCountryIso3 (the others are provided by the Server).
         /// </summary>
@@ -352,7 +367,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
         /// <returns> 
         /// A Tracking object with the fields in the same state as the server, if a field has an error,
         /// it won't be added, and won't be shown in the response (for example if the smses
-        ///	phone number is not valid). This response doesn't have checkpoints informed!
+        /// phone number is not valid). This response doesn't have checkpoints informed!
         /// </returns>
         public Tracking CreateTracking(Tracking tracking)
         {
@@ -373,7 +388,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
         {
             var parametersAll = !string.IsNullOrEmpty(tracking.Id) 
                 ? tracking.Id
-                : string.Format("{0}/{1}",tracking.Slug, tracking.TrackingNumber);
+                : string.Format("{0}/{1}", tracking.Slug, tracking.TrackingNumber);
 
             var response = Request("DELETE", string.Format("/trackings/{0}", parametersAll), null);
 
@@ -397,8 +412,10 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
             else
             {
                 var paramRequiredFields = ReplaceFirst(tracking.GetQueryRequiredFields(), "&", "?");
+
                 parametersExtra = string.Format("{0}/{1}{2}", tracking.Slug, tracking.TrackingNumber, paramRequiredFields);
             }
+
             var response = Request("GET", string.Format("/trackings/{0}", parametersExtra), null);
             var trackingJson = (JObject)response["data"]["tracking"];
 
@@ -443,20 +460,35 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
             return trackingJson.Count != 0 ? new Tracking(trackingJson) : null;
         }
 
-        ///<summary>
+        public IList<string> ParseListFieldTracking(IList<FieldTracking> list)
+        {
+            return list.Select(element => element.ToString()).ToList();
+        }
+
+        public string ReplaceFirst(string text, string search, string replace)
+        {
+            var pos = text.IndexOf(search, StringComparison.Ordinal);
+            return pos < 0 ? text : text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
+        }
+
+        #endregion
+
+        #region Utils
+
+        /// <summary>
         /// Make a request to the HTTP API of Aftership
-        ///</summary>
-        ///<param name="method">string with the method of the request: GET, POST, PUT, DELETE</param> 
-        ///<param name="urlResource">string with the URL of the request</param> 
-        ///<param name="body">string JSON with the body of the request, 
+        /// </summary>
+        /// <param name="method">string with the method of the request: GET, POST, PUT, DELETE</param> 
+        /// <param name="urlResource">string with the URL of the request</param> 
+        /// <param name="body">string JSON with the body of the request, 
         /// if the request doesn't need body "GET/DELETE", the bodywould be null</param> 
-        ///<returns>A string JSON with the response of the request</returns>
+        /// <returns>A string JSON with the response of the request</returns>
         private JObject Request(string method, string urlResource, string body)
         {
             var url = string.Format("{0}{1}{2}", _url, VERSION_API, urlResource);
-            var jsonResponse = "";
-            var header = new WebHeaderCollection {{"aftership-api-key", _tokenAftership}};
-            var request = WebRequest.Create(url) as HttpWebRequest;
+            var jsonResponse = string.Empty;
+            var header = new WebHeaderCollection { { "aftership-api-key", _tokenAftership } };
+            var request = (HttpWebRequest)WebRequest.Create(url);
 
             request.Timeout = 150000;
             request.Headers = header;
@@ -512,17 +544,6 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
             }
 
             return JObject.Parse(jsonResponse);
-        }
-
-        public IList<string> ParseListFieldTracking(IList<FieldTracking> list)
-        {
-            return list.Select(element => element.ToString()).ToList();
-        }
-
-        public string ReplaceFirst(string text, string search, string replace)
-        {
-            var pos = text.IndexOf(search, StringComparison.Ordinal);
-            return pos < 0 ? text : text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
         }
 
         #endregion

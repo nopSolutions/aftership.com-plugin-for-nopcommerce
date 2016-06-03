@@ -1,22 +1,29 @@
-﻿using System.Collections.Generic;
+﻿/* 
+ * This code is taken form AfterShip's GitHub (https://github.com/AfterShip/aftership-sdk-net)
+ * and slightly modified for our coding standards. 
+ */
+
+using System.Collections.Generic;
 using System.Text;
 
 namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
 {
     /// <summary>
-	/// Creates a url friendly String
-	/// </summary>
+    /// Creates a url friendly String
+    /// </summary>
     public class QueryString
     {
         #region Fields
 
-        private string _query = "";
+        private string _query = string.Empty;
 
         #endregion
 
         #region Ctors
 
-        public QueryString() { }
+        public QueryString()
+        {
+        }
 
         public QueryString(string name, string value)
         {

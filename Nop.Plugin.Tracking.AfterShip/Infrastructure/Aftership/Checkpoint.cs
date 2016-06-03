@@ -1,4 +1,9 @@
-﻿using System;
+﻿/* 
+ * This code is taken form AfterShip's GitHub (https://github.com/AfterShip/aftership-sdk-net)
+ * and slightly modified for our coding standards. 
+ */
+
+using System;
 using Newtonsoft.Json.Linq;
 using Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership.Enums;
 
@@ -47,7 +52,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
                 ? null 
                 : checkpointJson["zip"].ToString();
             _location = checkpointJson["location"] == null 
-                ? "" 
+                ? string.Empty
                 : checkpointJson["location"].ToString();
             _countryIso3 = checkpointJson["country_iso3"] != null 
                 ? checkpointJson["country_iso3"].ToString().ToIso3Enum() 
@@ -55,7 +60,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
 
             if (checkpointJson["created_at"] != null)
             {
-                if(!DateTime.TryParse(checkpointJson["created_at"].ToString(), out _createdAt))
+                if (!DateTime.TryParse(checkpointJson["created_at"].ToString(), out _createdAt))
                     _createdAt = DateTime.MinValue;
             }
             else

@@ -71,6 +71,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
             if (string.IsNullOrWhiteSpace(args.TrackingNumber)) return;
 
             var genericAttrs = _genericAttributeService.GetAttributesForEntity(args.Id, "Shipment");
+
             // Events for tracking is not yet registered. We register and save this entry in the generic attributes
             if (genericAttrs.Any(g => g.Value.Equals(args.TrackingNumber))) return;
 
@@ -101,8 +102,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
         {
             var order = shipment.Order;
             var customer = shipment.Order.Customer;
-            var customerFullName = string.Format("{0} {1}", order.ShippingAddress.FirstName,
-                order.ShippingAddress.LastName).Trim();
+            var customerFullName = string.Format("{0} {1}", order.ShippingAddress.FirstName, order.ShippingAddress.LastName).Trim();
 
             //create the new tracking
             var track = new Aftership.Tracking(shipment.TrackingNumber)
@@ -111,10 +111,12 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
                 OrderId = string.Format("ID {0}", order.Id),
                 OrderIdPath = string.Format("{0}orderdetails/{1}", _storeContext.CurrentStore.Url, order.Id)
             };
+
             if (_settings.AllowCustomerNotification)
             {
                 track.Emails = new List<string> { customer.Email };
             }
+
             try
             {
                 track = _connection.CreateTracking(track);
@@ -145,8 +147,9 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
             }
             catch (WebException ex)
             {
-                _logger.Error(string.Format("Cannot registration tracking with number - {0}",
-                    shipment.TrackingNumber), new Exception(ex.Message));
+                _logger.Error(
+                    string.Format("Cannot registration tracking with number - {0}", shipment.TrackingNumber), 
+                    new Exception(ex.Message));
             }
         }
 
@@ -161,15 +164,17 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
                 {
                     track.Slug = courier.Slug;
                     result = _connection.DeleteTracking(track);
-                    if(result)
+                    if (result)
                         break;
                 }
             }
             catch (WebException ex)
             {
-                _logger.Warning(string.Format("Cannot delete tracking with number - {0}",
-                    trackingNumber), new Exception(ex.Message));
+                _logger.Warning(
+                    string.Format("Cannot delete tracking with number - {0}", trackingNumber), 
+                    new Exception(ex.Message));
             }
+
             return result;
         }
         

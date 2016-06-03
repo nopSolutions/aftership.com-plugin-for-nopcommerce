@@ -101,15 +101,15 @@ namespace Nop.Plugin.Tracking.AfterShip
                 }
                 catch (WebException)
                 {
-                    _logger.Error(string.Format("Error getting tracking information on Aftership events - {0}",
-                        trackingNumber));
+                    _logger.Error(
+                        string.Format("Error getting tracking information on Aftership events - {0}", trackingNumber));
                 }
             }
             else
             {
                 try
                 {
-                    //use try-catch to ensure exception won't be thrown is web service is not available
+                    // use try-catch to ensure exception won't be thrown is web service is not available
                     couriers = _connection.DetectCouriers(trackingNumber, null, null, null, null);
                 }
                 catch (Exception ex)
@@ -126,13 +126,13 @@ namespace Nop.Plugin.Tracking.AfterShip
                         tracker.Slug = courier.Slug;
                         tracker = _connection.GetTrackingByNumber(tracker);
                         shipmentStatusList = GetShipmentStatusEvents(tracker);
-                        if(shipmentStatusList.Any())
+                        if (shipmentStatusList.Any())
                             break;
                     }
                     catch (WebException)
                     {
-                        _logger.Error(string.Format("Error getting tracking information on Aftership events - {0}",
-                            trackingNumber));
+                        _logger.Error(
+                            string.Format("Error getting tracking information on Aftership events - {0}", trackingNumber));
                     }
                 }
             }
@@ -159,12 +159,12 @@ namespace Nop.Plugin.Tracking.AfterShip
                     country = _countryService.GetCountryByThreeLetterIsoCode(checkpoint.CountryIso3.GetIso3Code());
                 var shipmentStatus = new ShipmentStatusEvent
                 {
-                    CountryCode = country != null ? country.TwoLetterIsoCode : "",
+                    CountryCode = country != null ? country.TwoLetterIsoCode : string.Empty,
                     Date = Convert.ToDateTime(checkpoint.CheckpointTime),
                     EventName = string.Format("{0} ({1})", checkpoint.Message, GetStatus(checkpoint)),
                     Location = string.IsNullOrEmpty(checkpoint.City) ? checkpoint.Location : checkpoint.City
                 };
-                //other properties (not used yet)
+                //// other properties (not used yet)
                 //checkpoint.checkpointTime;
                 //checkpoint.countryName;
                 //checkpoint.state;
@@ -182,35 +182,43 @@ namespace Nop.Plugin.Tracking.AfterShip
             {
                 case "Pending":
                     return
-                        _localizationService.GetLocaleStringResourceByName("Plugins.Tracking.AfterShip.Status.Pending",
+                        _localizationService.GetLocaleStringResourceByName(
+                            "Plugins.Tracking.AfterShip.Status.Pending",
                             _workContext.WorkingLanguage.Id).ResourceValue;
                 case "InfoReceived":
                     return
-                        _localizationService.GetLocaleStringResourceByName("Plugins.Tracking.AfterShip.Status.InfoReceived",
+                        _localizationService.GetLocaleStringResourceByName(
+                            "Plugins.Tracking.AfterShip.Status.InfoReceived",
                             _workContext.WorkingLanguage.Id).ResourceValue;
                 case "InTransit":
                     return
-                        _localizationService.GetLocaleStringResourceByName("Plugins.Tracking.AfterShip.Status.InTransit",
+                        _localizationService.GetLocaleStringResourceByName(
+                            "Plugins.Tracking.AfterShip.Status.InTransit",
                             _workContext.WorkingLanguage.Id).ResourceValue;
                 case "OutForDelivery":
                     return
-                        _localizationService.GetLocaleStringResourceByName("Plugins.Tracking.AfterShip.Status.OutForDelivery",
+                        _localizationService.GetLocaleStringResourceByName(
+                            "Plugins.Tracking.AfterShip.Status.OutForDelivery",
                             _workContext.WorkingLanguage.Id).ResourceValue;
                 case "AttemptFail":
                     return
-                        _localizationService.GetLocaleStringResourceByName("Plugins.Tracking.AfterShip.Status.AttemptFail",
+                        _localizationService.GetLocaleStringResourceByName(
+                            "Plugins.Tracking.AfterShip.Status.AttemptFail",
                             _workContext.WorkingLanguage.Id).ResourceValue;
                 case "Delivered":
                     return
-                        _localizationService.GetLocaleStringResourceByName("Plugins.Tracking.AfterShip.Status.Delivered",
+                        _localizationService.GetLocaleStringResourceByName(
+                            "Plugins.Tracking.AfterShip.Status.Delivered",
                             _workContext.WorkingLanguage.Id).ResourceValue;
                 case "Expired":
                     return
-                        _localizationService.GetLocaleStringResourceByName("Plugins.Tracking.AfterShip.Status.Expired",
+                        _localizationService.GetLocaleStringResourceByName(
+                            "Plugins.Tracking.AfterShip.Status.Expired",
                             _workContext.WorkingLanguage.Id).ResourceValue;
                 default:
                     return
-                        _localizationService.GetLocaleStringResourceByName("Plugins.Tracking.AfterShip.Status.Exception",
+                        _localizationService.GetLocaleStringResourceByName(
+                            "Plugins.Tracking.AfterShip.Status.Exception",
                             _workContext.WorkingLanguage.Id).ResourceValue;
             }
         }

@@ -1,4 +1,9 @@
-﻿using System.Collections.Generic;
+﻿/* 
+ * This code is taken form AfterShip's GitHub (https://github.com/AfterShip/aftership-sdk-net)
+ * and slightly modified for our coding standards. 
+ */
+
+using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -9,18 +14,18 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
     {
         #region Fields
 
-        private string  _slug;
-        private string  _name;
-        private string  _phone;
-        private string  _otherName;
-        private string  _webUrl;
+        private string _slug;
+        private string _name;
+        private string _phone;
+        private string _otherName;
+        private string _webUrl;
         private IList<string> _requireFields;
 
         #endregion
 
         #region Ctors
 
-        public Courier(string  webUrl, string  slug, string  name, string  phone, string  otherName)
+        public Courier(string webUrl, string slug, string name, string phone, string otherName)
         {
             _webUrl = webUrl;
             _slug = slug;
@@ -53,10 +58,11 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
 
             if (requireFieldsArray == null || !requireFieldsArray.Any()) return;
 
-            _requireFields = new List<string >();
+            _requireFields = new List<string>();
+
             foreach (var token in requireFieldsArray)
             {
-                _requireFields.Add(token.ToString ());
+                _requireFields.Add(token.ToString());
             }
         }
 
@@ -65,42 +71,42 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
         #region Fields
 
         [JsonProperty("slug")]
-        public string  Slug
+        public string Slug
         {
             get { return _slug; }
             set { _slug = value; }
         }
 
         [JsonProperty("name")]
-        public string  Name
+        public string Name
         {
             get { return _name; }
             set { _name = value; }
         }
 
         [JsonProperty("phone")]
-        public string  Phone
+        public string Phone
         {
             get { return _phone; }
             set { _phone = value; }
         }
 
         [JsonProperty("other_name")]
-        public string  OtherName
+        public string OtherName
         {
             get { return _otherName; }
             set { _otherName = value; }
         }
 
         [JsonProperty("web_url")]
-        public string  WebUrl
+        public string WebUrl
         {
             get { return _webUrl; }
             set { _webUrl = value; }
         }
 
         [JsonIgnore]
-        public IList<string > RequireFields
+        public IList<string> RequireFields
         {
             get { return _requireFields; }
             set { _requireFields = value; }
@@ -110,15 +116,15 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
 
         #region Methods
 
-        public void AddRequireField(string  requierField)
+        public void AddRequireField(string requierField)
         {
             if (_requireFields == null)
-                _requireFields = new List<string> {requierField};
+                _requireFields = new List<string> { requierField };
             else
                 _requireFields.Add(requierField);
         }
 
-        public void DeleteRequireField(string  requireField)
+        public void DeleteRequireField(string requireField)
         {
             if (_requireFields != null)
                 _requireFields.Remove(requireField);
@@ -131,7 +137,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership
 
         public override string ToString()
         {
-            var courierJson = new JObject {Slug, Name, Phone, OtherName, WebUrl};
+            var courierJson = new JObject { Slug, Name, Phone, OtherName, WebUrl };
 
             return string.Format("Courier{0}", courierJson);
         }

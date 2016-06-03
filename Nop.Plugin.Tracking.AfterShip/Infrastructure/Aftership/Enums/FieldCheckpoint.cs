@@ -1,4 +1,9 @@
-﻿using System.ComponentModel;
+﻿/* 
+ * This code is taken form AfterShip's GitHub (https://github.com/AfterShip/aftership-sdk-net)
+ * and slightly modified for our coding standards. 
+ */
+
+using System.ComponentModel;
 
 namespace Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership.Enums
 {

@@ -18,7 +18,7 @@ namespace Nop.Plugin.Tracking.AfterShip
 
         public AfterShipTrackingMethod(ISettingService settingService)
         {
-            _settingService = settingService;
+            this._settingService = settingService;
         }
 
         #endregion
@@ -53,7 +53,7 @@ namespace Nop.Plugin.Tracking.AfterShip
                 ApiKey = "MyAfterShipAPIKey"
             };
 
-            _settingService.SaveSetting(settings);
+            this._settingService.SaveSetting(settings);
             base.Install();
         }
 
@@ -63,7 +63,8 @@ namespace Nop.Plugin.Tracking.AfterShip
         public override void Uninstall()
         {
             //settings
-            _settingService.DeleteSetting<AfterShipSettings>();
+            this._settingService.DeleteSetting<AfterShipSettings>();
+
             //locales
             this.DeletePluginLocaleResource("Plugins.Tracking.AfterShip.ApiKey");
             this.DeletePluginLocaleResource("Plugins.Tracking.AfterShip.ApiKey.Hint");

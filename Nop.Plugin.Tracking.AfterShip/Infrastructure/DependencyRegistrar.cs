@@ -9,11 +9,11 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
 {
     public class DependencyRegistrar : IDependencyRegistrar
     {
+        public int Order { get { return 1; } }
+
         public void Register(ContainerBuilder builder, ITypeFinder typeFinder, NopConfig config)
         {
             FilterProviders.Providers.Add(new AfterShipTrackerFilterProvider());
         }
-
-        public int Order { get { return 1; } }
     }
 }
