@@ -42,7 +42,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
                         var shipmentTracker = srcm.ShipmentTracker;
                         if (shipmentTracker == null)
                         {
-                            shipmentTracker = new AfterShipTracker(afterShipSettings);
+                            shipmentTracker = new AfterShipTracker(afterShipSettings, shipment);
 
                             model.TrackingNumberUrl = shipmentTracker.GetUrl(shipment.TrackingNumber);
                             if (shippingSettings.DisplayShipmentEventsToCustomers)

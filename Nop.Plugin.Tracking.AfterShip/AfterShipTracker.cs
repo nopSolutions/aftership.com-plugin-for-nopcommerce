@@ -2,9 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using AftershipAPI;
 using Nop.Core;
+using Nop.Core.Domain.Directory;
+using Nop.Core.Domain.Shipping;
 using Nop.Core.Infrastructure;
+using Nop.Plugin.Tracking.AfterShip.Infrastructure;
+using Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership;
+using Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership.Enums;
+using Nop.Services.Common;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
@@ -16,23 +21,29 @@ namespace Nop.Plugin.Tracking.AfterShip
     {
         #region Fields
 
-        private readonly AfterShipSettings _settings;
         private readonly ICountryService _countryService;
+        private readonly IGenericAttributeService _genericAttributeService;
         private readonly ILocalizationService _localizationService;
         private readonly ILogger _logger;
         private readonly IWorkContext _workContext;
+        private readonly AftershipConnection _connection;
+        private readonly AfterShipSettings _settings;
+        private readonly Shipment _shipment;
 
         #endregion
 
         #region Ctor
 
-        public AfterShipTracker(AfterShipSettings settings)
+        public AfterShipTracker(AfterShipSettings settings, Shipment shipment)
         {
-            this._countryService = EngineContext.Current.Resolve<ICountryService>();
-            this._localizationService = EngineContext.Current.Resolve<ILocalizationService>();
-            this._logger = EngineContext.Current.Resolve<ILogger>();
-            this._workContext = EngineContext.Current.Resolve<IWorkContext>();
-            this._settings = settings;
+            _countryService = EngineContext.Current.Resolve<ICountryService>();
+            _genericAttributeService = EngineContext.Current.Resolve<IGenericAttributeService>();
+            _localizationService = EngineContext.Current.Resolve<ILocalizationService>();
+            _logger = EngineContext.Current.Resolve<ILogger>();
+            _workContext = EngineContext.Current.Resolve<IWorkContext>();
+            _settings = settings;
+            _connection = new AftershipConnection(_settings.ApiKey);
+            _shipment = shipment;
         }
 
         #endregion
@@ -75,55 +86,54 @@ namespace Nop.Plugin.Tracking.AfterShip
             if (string.IsNullOrEmpty(trackingNumber))
                 return new List<ShipmentStatusEvent>();
 
-            var connection = new ConnectionAPI(_settings.ApiKey);
-            var tracker = new AftershipAPI.Tracking(trackingNumber);
+            var tracker = new Infrastructure.Aftership.Tracking(trackingNumber);
+            var genericAttrs = _genericAttributeService.GetAttributesForEntity(_shipment.Id, "Shipment");
+            var trackingInfo = genericAttrs.FirstOrDefault(a => a.Key.Equals(Constants.SHIPMENT_TRACK_ID_ATTRIBUTE_NAME));
+            IList<ShipmentStatusEvent> shipmentStatusList = new List<ShipmentStatusEvent>();
             IList<Courier> couriers = null;
-            var shipmentStatusList = new List<ShipmentStatusEvent>();
-            try
-            {
-                //use try-catch to ensure exception won't be thrown is web service is not available
-                couriers = connection.detectCouriers(trackingNumber, null, null, null, null);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error("Error getting couriers information on Aftership", ex);
-            }
 
-            if (couriers == null) return shipmentStatusList;
-
-            foreach (var courier in couriers)
+            if (trackingInfo != null)
             {
                 try
                 {
-                    tracker.slug = courier.slug;
-                    tracker = connection.getTrackingByNumber(tracker);
-                    if (!tracker.checkpoints.Any()) continue;
-
-                    foreach (var checkpoint in tracker.checkpoints)
-                    {
-                        var checkpointCountryIso3Code = checkpoint.countryISO3.ToString();
-                        var country = _countryService.GetCountryByThreeLetterIsoCode(checkpointCountryIso3Code);
-                        var shipmentStatus = new ShipmentStatusEvent
-                        {
-                            CountryCode = country.TwoLetterIsoCode,
-                            Date = Convert.ToDateTime(checkpoint.checkpointTime),
-                            EventName = String.Format("{0} ({1})", checkpoint.message, GetStatus(checkpoint)),
-                            Location = checkpoint.city
-                        };
-                        //other properties (not used yet)
-                        //checkpoint.checkpointTime;
-                        //checkpoint.countryName;
-                        //checkpoint.state;
-                        //checkpoint.zip;
-
-                        shipmentStatusList.Add(shipmentStatus);
-                    }
-                    break;
+                    tracker.Id = trackingInfo.Value;
+                    shipmentStatusList = GetShipmentStatusEvents(tracker);
                 }
                 catch (WebException)
                 {
                     _logger.Error(string.Format("Error getting tracking information on Aftership events - {0}",
                         trackingNumber));
+                }
+            }
+            else
+            {
+                try
+                {
+                    //use try-catch to ensure exception won't be thrown is web service is not available
+                    couriers = _connection.DetectCouriers(trackingNumber, null, null, null, null);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error("Error getting couriers information on Aftership", ex);
+                }
+
+                if (couriers == null) return shipmentStatusList;
+
+                foreach (var courier in couriers)
+                {
+                    try
+                    {
+                        tracker.Slug = courier.Slug;
+                        tracker = _connection.GetTrackingByNumber(tracker);
+                        shipmentStatusList = GetShipmentStatusEvents(tracker);
+                        if(shipmentStatusList.Any())
+                            break;
+                    }
+                    catch (WebException)
+                    {
+                        _logger.Error(string.Format("Error getting tracking information on Aftership events - {0}",
+                            trackingNumber));
+                    }
                 }
             }
 
@@ -134,9 +144,41 @@ namespace Nop.Plugin.Tracking.AfterShip
 
         #region Utilites
 
+        private IList<ShipmentStatusEvent> GetShipmentStatusEvents(Infrastructure.Aftership.Tracking tracker)
+        {
+            var shipmentStatusList = new List<ShipmentStatusEvent>();
+
+            tracker = _connection.GetTrackingByNumber(tracker);
+
+            if (tracker.Checkpoints == null || !tracker.Checkpoints.Any()) return shipmentStatusList;
+
+            foreach (var checkpoint in tracker.Checkpoints)
+            {
+                Country country = null;
+                if (checkpoint.CountryIso3 != Iso3Country.Null)
+                    country = _countryService.GetCountryByThreeLetterIsoCode(checkpoint.CountryIso3.GetIso3Code());
+                var shipmentStatus = new ShipmentStatusEvent
+                {
+                    CountryCode = country != null ? country.TwoLetterIsoCode : "",
+                    Date = Convert.ToDateTime(checkpoint.CheckpointTime),
+                    EventName = string.Format("{0} ({1})", checkpoint.Message, GetStatus(checkpoint)),
+                    Location = string.IsNullOrEmpty(checkpoint.City) ? checkpoint.Location : checkpoint.City
+                };
+                //other properties (not used yet)
+                //checkpoint.checkpointTime;
+                //checkpoint.countryName;
+                //checkpoint.state;
+                //checkpoint.zip;
+
+                shipmentStatusList.Add(shipmentStatus);
+            }
+
+            return shipmentStatusList;
+        } 
+
         private string GetStatus(Checkpoint checkpoint)
         {
-            switch (checkpoint.tag)
+            switch (checkpoint.Tag)
             {
                 case "Pending":
                     return

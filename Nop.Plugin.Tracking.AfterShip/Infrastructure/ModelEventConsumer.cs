@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using AftershipAPI;
 using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Events;
+using Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership;
 using Nop.Services.Common;
 using Nop.Services.Events;
 using Nop.Services.Logging;
@@ -15,18 +15,12 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
 {
     public class ModelEventConsumer : IConsumer<EntityUpdated<Shipment>>, IConsumer<EntityInserted<Shipment>>, IConsumer<EntityDeleted<Shipment>>
     {
-        #region Constants
-
-        private const string SHIPMENT_NOTIFICATION_ATTRIBUTE_NAME = "IsSetNotification";
-        private const string SHIPMENT_TRACK_NUMBER_ATTRIBUTE_NAME = "TrackNumber";
-
-        #endregion
-
         #region Fields
 
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly IStoreContext _storeContext;
         private readonly ILogger _logger;
+        private readonly AftershipConnection _connection;
         private readonly AfterShipSettings _settings;
 
         #endregion
@@ -39,6 +33,8 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
             _storeContext = storeContext;
             _logger = logger;
             _settings = settings;
+
+            _connection = new AftershipConnection(_settings.ApiKey);
         }
 
         #endregion
@@ -79,10 +75,10 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
             if (genericAttrs.Any(g => g.Value.Equals(args.TrackingNumber))) return;
 
             //remove the old tracker
-            var oldTrackAttr = genericAttrs.First(g => g.Key.Equals(SHIPMENT_TRACK_NUMBER_ATTRIBUTE_NAME));
+            var oldTrackAttr = genericAttrs.FirstOrDefault(g => g.Key.Equals(Constants.SHIPMENT_TRACK_NUMBER_ATTRIBUTE_NAME));
             if (oldTrackAttr != null && !oldTrackAttr.Value.Equals(args.TrackingNumber))
             {
-                if (RemoveTracking(args.TrackingNumber))
+                if (RemoveTracking(oldTrackAttr.Value))
                 {
                     foreach (var genericAttribute in genericAttrs)
                     {
@@ -103,30 +99,29 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
 
         private void CreateTracking(Shipment shipment)
         {
-            var connection = new ConnectionAPI(_settings.ApiKey);
             var order = shipment.Order;
             var customer = shipment.Order.Customer;
             var customerFullName = string.Format("{0} {1}", order.ShippingAddress.FirstName,
                 order.ShippingAddress.LastName).Trim();
 
             //create the new tracking
-            var track = new AftershipAPI.Tracking(shipment.TrackingNumber)
+            var track = new Aftership.Tracking(shipment.TrackingNumber)
             {
-                customerName = customerFullName,
-                orderID = string.Format("ID {0}", order.Id),
-                orderIDPath = string.Format("{0}orderdetails/{1}", _storeContext.CurrentStore.Url, order.Id)
+                CustomerName = customerFullName,
+                OrderId = string.Format("ID {0}", order.Id),
+                OrderIdPath = string.Format("{0}orderdetails/{1}", _storeContext.CurrentStore.Url, order.Id)
             };
             if (_settings.AllowCustomerNotification)
             {
-                track.emails = new List<string> { customer.Email };
+                track.Emails = new List<string> { customer.Email };
             }
             try
             {
-                connection.createTracking(track);
+                track = _connection.CreateTracking(track);
                 _genericAttributeService.InsertAttribute(new GenericAttribute
                 {
                     EntityId = shipment.Id,
-                    Key = SHIPMENT_NOTIFICATION_ATTRIBUTE_NAME,
+                    Key = Constants.SHIPMENT_NOTIFICATION_ATTRIBUTE_NAME,
                     KeyGroup = "Shipment",
                     StoreId = 0,
                     Value = "True"
@@ -134,10 +129,18 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
                 _genericAttributeService.InsertAttribute(new GenericAttribute
                 {
                     EntityId = shipment.Id,
-                    Key = SHIPMENT_TRACK_NUMBER_ATTRIBUTE_NAME,
+                    Key = Constants.SHIPMENT_TRACK_NUMBER_ATTRIBUTE_NAME,
                     KeyGroup = "Shipment",
                     StoreId = 0,
                     Value = shipment.TrackingNumber
+                });
+                _genericAttributeService.InsertAttribute(new GenericAttribute
+                {
+                    EntityId = shipment.Id,
+                    Key = Constants.SHIPMENT_TRACK_ID_ATTRIBUTE_NAME,
+                    KeyGroup = "Shipment",
+                    StoreId = 0,
+                    Value = track.Id
                 });
             }
             catch (WebException ex)
@@ -149,16 +152,15 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
 
         private bool RemoveTracking(string trackingNumber)
         {
-            bool result = false;
+            var result = false;
             try
             {
-                var connection = new ConnectionAPI(_settings.ApiKey);
-                var track = new AftershipAPI.Tracking(trackingNumber);
-                var couriers = connection.detectCouriers(trackingNumber);
+                var track = new Aftership.Tracking(trackingNumber);
+                var couriers = _connection.DetectCouriers(trackingNumber);
                 foreach (var courier in couriers)
                 {
-                    track.slug = courier.slug;
-                    result = connection.deleteTracking(track);
+                    track.Slug = courier.Slug;
+                    result = _connection.DeleteTracking(track);
                     if(result)
                         break;
                 }

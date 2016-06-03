@@ -6,7 +6,6 @@ namespace Nop.Plugin.Tracking.AfterShip.Models
     public class ConfigurationModel : BaseNopModel
     {
         public int ActiveStoreScopeConfiguration { get; set; }
-
         [NopResourceDisplayName("Plugins.Tracking.AfterShip.ApiKey")]
         public string ApiKey { get; set; }
         [NopResourceDisplayName("Plugins.Tracking.AfterShip.AfterShipUsername")]
