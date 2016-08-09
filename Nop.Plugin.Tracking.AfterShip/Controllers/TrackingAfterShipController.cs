@@ -27,7 +27,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Controllers
 
         #endregion
 
-        #region Actions
+        #region Methods
 
         [AdminAuthorize]
         [ChildActionOnly]
@@ -56,9 +56,6 @@ namespace Nop.Plugin.Tracking.AfterShip.Controllers
             afterShipSettings.ApiKey = model.ApiKey;
 
             _settingService.SaveSetting(afterShipSettings);
-
-            //now clear settings cache
-            _settingService.ClearCache();
 
             SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
 
