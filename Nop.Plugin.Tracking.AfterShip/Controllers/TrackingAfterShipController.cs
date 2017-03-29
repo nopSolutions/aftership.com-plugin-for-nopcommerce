@@ -41,7 +41,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Controllers
                 ApiKey = afterShipSettings.ApiKey
             };
 
-            return View("~/Plugins/Tracking.AfterShip/Views/TrackingAfterShip/Configure.cshtml", model);
+            return View("~/Plugins/Tracking.AfterShip/Views/Configure.cshtml", model);
         }
 
         [HttpPost]
