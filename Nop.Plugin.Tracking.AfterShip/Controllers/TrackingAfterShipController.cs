@@ -1,11 +1,15 @@
-﻿using System.Web.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Tracking.AfterShip.Models;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
+using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Tracking.AfterShip.Controllers
 {
+    [AuthorizeAdmin]
+    [Area(AreaNames.Admin)]
     public class TrackingAfterShipController : BasePluginController
     {
         #region Fields
@@ -29,11 +33,9 @@ namespace Nop.Plugin.Tracking.AfterShip.Controllers
 
         #region Methods
 
-        [AdminAuthorize]
-        [ChildActionOnly]
-        public ActionResult Configure()
+        public IActionResult Configure()
         {
-            var afterShipSettings = this._settingService.LoadSetting<AfterShipSettings>();
+            var afterShipSettings = _settingService.LoadSetting<AfterShipSettings>();
             var model = new ConfigurationModel
             {
                 AfterShipUsername = afterShipSettings.AfterShipUsername,
@@ -45,9 +47,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Controllers
         }
 
         [HttpPost]
-        [AdminAuthorize]
-        [ChildActionOnly]
-        public ActionResult Configure(ConfigurationModel model)
+        public IActionResult Configure(ConfigurationModel model)
         {
             //load settings
             var afterShipSettings = _settingService.LoadSetting<AfterShipSettings>();

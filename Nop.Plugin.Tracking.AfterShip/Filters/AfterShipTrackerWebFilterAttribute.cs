@@ -1,11 +1,13 @@
 ﻿using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Infrastructure;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Shipping;
+using Nop.Web.Areas.Admin.Controllers;
+using Nop.Web.Framework.Controllers;
 using Nop.Web.Models.Order;
 
 namespace Nop.Plugin.Tracking.AfterShip.Filters
@@ -22,7 +24,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
             var shippingService = EngineContext.Current.Resolve<IShippingService>();
             var shippingSettings = settingService.LoadSetting<ShippingSettings>();
 
-            var model = filterContext.Controller.ViewData.Model as ShipmentDetailsModel;
+            var model = (filterContext.Controller as BaseController)?.ViewData.Model as ShipmentDetailsModel;
 
             if (model != null && !model.ShipmentStatusEvents.Any())
             {
@@ -41,7 +43,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
                         var shipmentTracker = srcm.ShipmentTracker;
                         if (shipmentTracker == null)
                         {
-                            shipmentTracker = new AfterShipTracker(afterShipSettings, shipment);
+                            shipmentTracker = new AfterShipTracker(afterShipSettings, shipmentService);
 
                             model.TrackingNumberUrl = shipmentTracker.GetUrl(shipment.TrackingNumber);
                             if (shippingSettings.DisplayShipmentEventsToCustomers)
@@ -63,7 +65,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
                                     }
                                 }
 
-                                filterContext.Controller.ViewData.Model = model;
+                                ((BaseAdminController)filterContext.Controller).ViewData.Model = model;
                             }
                         }
                     }

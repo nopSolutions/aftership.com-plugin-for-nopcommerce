@@ -1,11 +1,14 @@
 ﻿using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Infrastructure;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Shipping;
+using Nop.Web.Areas.Admin.Controllers;
+using Nop.Web.Areas.Admin.Models.Orders;
+using Nop.Web.Framework.Controllers;
 
 namespace Nop.Plugin.Tracking.AfterShip.Filters
 {
@@ -21,7 +24,9 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
             var shippingService = EngineContext.Current.Resolve<IShippingService>();
             var shippingSettings = settingService.LoadSetting<ShippingSettings>();
 
-            var model = filterContext.Controller.ViewData.Model as Admin.Models.Orders.ShipmentModel;
+            var model = (filterContext.Controller as BaseController)?.ViewData.Model as ShipmentModel;
+
+            //var model = filterContext.Controller.ViewData.Model as Admin.Models.Orders.ShipmentModel;
 
             if (model != null && !model.ShipmentStatusEvents.Any())
             {
@@ -40,7 +45,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
                         var shipmentTracker = srcm.ShipmentTracker;
                         if (shipmentTracker == null)
                         {
-                            shipmentTracker = new AfterShipTracker(afterShipSettings, shipment);
+                            shipmentTracker = new AfterShipTracker(afterShipSettings, shipmentService);
 
                             model.TrackingNumberUrl = shipmentTracker.GetUrl(shipment.TrackingNumber);
                             if (shippingSettings.DisplayShipmentEventsToStoreOwner)
@@ -50,7 +55,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
                                 {
                                     foreach (var shipmentEvent in shipmentEvents)
                                     {
-                                        var shipmentStatusEventModel = new Admin.Models.Orders.ShipmentModel.ShipmentStatusEventModel();
+                                        var shipmentStatusEventModel = new ShipmentModel.ShipmentStatusEventModel();
                                         var shipmentEventCountry = countryService.GetCountryByTwoLetterIsoCode(shipmentEvent.CountryCode);
                                         shipmentStatusEventModel.Country = shipmentEventCountry != null
                                                                                ? shipmentEventCountry.GetLocalized(x => x.Name)
@@ -62,13 +67,18 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
                                     }
                                 }
 
-                                filterContext.Controller.ViewData.Model = model;
+                                ((BaseAdminController)filterContext.Controller).ViewData.Model = model;
                             }
                         }
                     }
                 }
             }
             base.OnResultExecuting(filterContext);
+        }
+
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            base.OnActionExecuting(context);
         }
 
         #endregion

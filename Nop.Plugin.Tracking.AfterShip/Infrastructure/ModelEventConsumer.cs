@@ -102,14 +102,14 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
         {
             var order = shipment.Order;
             var customer = shipment.Order.Customer;
-            var customerFullName = string.Format("{0} {1}", order.ShippingAddress.FirstName, order.ShippingAddress.LastName).Trim();
+            var customerFullName = $"{order.ShippingAddress.FirstName} {order.ShippingAddress.LastName}".Trim();
 
             //create the new tracking
             var track = new Aftership.Tracking(shipment.TrackingNumber)
             {
                 CustomerName = customerFullName,
-                OrderId = string.Format("ID {0}", order.Id),
-                OrderIdPath = string.Format("{0}orderdetails/{1}", _storeContext.CurrentStore.Url, order.Id)
+                OrderId = $"ID {order.Id}",
+                OrderIdPath = $"{_storeContext.CurrentStore.Url}orderdetails/{order.Id}"
             };
 
             if (_settings.AllowCustomerNotification)
@@ -147,9 +147,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
             }
             catch (WebException ex)
             {
-                _logger.Error(
-                    string.Format("Cannot registration tracking with number - {0}", shipment.TrackingNumber), 
-                    new Exception(ex.Message));
+                _logger.Error($"Cannot registration tracking with number - {shipment.TrackingNumber}", new Exception(ex.Message));
             }
         }
 
@@ -170,9 +168,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
             }
             catch (WebException ex)
             {
-                _logger.Warning(
-                    string.Format("Cannot delete tracking with number - {0}", trackingNumber), 
-                    new Exception(ex.Message));
+                _logger.Warning($"Cannot delete tracking with number - {trackingNumber}", new Exception(ex.Message));
             }
 
             return result;

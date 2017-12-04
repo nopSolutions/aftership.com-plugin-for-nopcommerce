@@ -13,6 +13,7 @@ using Nop.Services.Common;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
+using Nop.Services.Shipping;
 using Nop.Services.Shipping.Tracking;
 
 namespace Nop.Plugin.Tracking.AfterShip
@@ -28,13 +29,13 @@ namespace Nop.Plugin.Tracking.AfterShip
         private readonly IWorkContext _workContext;
         private readonly AftershipConnection _connection;
         private readonly AfterShipSettings _settings;
-        private readonly Shipment _shipment;
+        private readonly IShipmentService _shipmentService;
 
         #endregion
 
         #region Ctor
 
-        public AfterShipTracker(AfterShipSettings settings, Shipment shipment)
+        public AfterShipTracker(AfterShipSettings settings, IShipmentService shipmentService)
         {
             _countryService = EngineContext.Current.Resolve<ICountryService>();
             _genericAttributeService = EngineContext.Current.Resolve<IGenericAttributeService>();
@@ -43,7 +44,7 @@ namespace Nop.Plugin.Tracking.AfterShip
             _workContext = EngineContext.Current.Resolve<IWorkContext>();
             _settings = settings;
             _connection = new AftershipConnection(_settings.ApiKey);
-            _shipment = shipment;
+            _shipmentService = shipmentService;
         }
 
         #endregion
@@ -68,9 +69,9 @@ namespace Nop.Plugin.Tracking.AfterShip
         public string GetUrl(string trackingNumber)
         {
             if (string.IsNullOrWhiteSpace(_settings.AfterShipUsername) || _settings.AfterShipUsername.Equals("MyAfterShipUsername"))
-                return string.Format("https://track.aftership.com/{0}", trackingNumber);
+                return $"https://track.aftership.com/{trackingNumber}";
 
-            return string.Format("https://{0}.aftership.com/{1}", _settings.AfterShipUsername, trackingNumber);
+            return $"https://{_settings.AfterShipUsername}.aftership.com/{trackingNumber}";
         }
 
         /// <summary>
@@ -86,8 +87,14 @@ namespace Nop.Plugin.Tracking.AfterShip
             if (string.IsNullOrEmpty(trackingNumber))
                 return new List<ShipmentStatusEvent>();
 
+            var shipment = _shipmentService.GetAllShipments(trackingNumber: trackingNumber)
+                .FirstOrDefault(s => !s.DeliveryDateUtc.HasValue);
+
+            if (shipment == null)
+                return new List<ShipmentStatusEvent>();
+
             var tracker = new Infrastructure.Aftership.Tracking(trackingNumber);
-            var genericAttrs = _genericAttributeService.GetAttributesForEntity(_shipment.Id, "Shipment");
+            var genericAttrs = _genericAttributeService.GetAttributesForEntity(shipment.Id, "Shipment");
             var trackingInfo = genericAttrs.FirstOrDefault(a => a.Key.Equals(Constants.SHIPMENT_TRACK_ID_ATTRIBUTE_NAME));
             IList<ShipmentStatusEvent> shipmentStatusList = new List<ShipmentStatusEvent>();
             IList<Courier> couriers = null;
@@ -101,8 +108,7 @@ namespace Nop.Plugin.Tracking.AfterShip
                 }
                 catch (WebException)
                 {
-                    _logger.Error(
-                        string.Format("Error getting tracking information on Aftership events - {0}", trackingNumber));
+                    _logger.Error($"Error getting tracking information on Aftership events - {trackingNumber}");
                 }
             }
             else
@@ -131,8 +137,7 @@ namespace Nop.Plugin.Tracking.AfterShip
                     }
                     catch (WebException)
                     {
-                        _logger.Error(
-                            string.Format("Error getting tracking information on Aftership events - {0}", trackingNumber));
+                        _logger.Error($"Error getting tracking information on Aftership events - {trackingNumber}");
                     }
                 }
             }
@@ -161,7 +166,7 @@ namespace Nop.Plugin.Tracking.AfterShip
                 {
                     CountryCode = country != null ? country.TwoLetterIsoCode : string.Empty,
                     Date = Convert.ToDateTime(checkpoint.CheckpointTime),
-                    EventName = string.Format("{0} ({1})", checkpoint.Message, GetStatus(checkpoint)),
+                    EventName = $"{checkpoint.Message} ({GetStatus(checkpoint)})",
                     Location = string.IsNullOrEmpty(checkpoint.City) ? checkpoint.Location : checkpoint.City
                 };
                 //// other properties (not used yet)

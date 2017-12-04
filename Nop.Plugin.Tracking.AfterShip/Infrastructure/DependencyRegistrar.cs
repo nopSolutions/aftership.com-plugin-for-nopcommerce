@@ -1,5 +1,5 @@
-﻿using System.Web.Mvc;
-using Autofac;
+﻿using Autofac;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core.Configuration;
 using Nop.Core.Infrastructure;
 using Nop.Core.Infrastructure.DependencyManagement;
@@ -13,7 +13,8 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
 
         public void Register(ContainerBuilder builder, ITypeFinder typeFinder, NopConfig config)
         {
-            FilterProviders.Providers.Add(new AfterShipTrackerFilterProvider());
+            //FilterProviders.Providers.Add(new AfterShipTrackerFilterProvider());
+            builder.RegisterType<AfterShipTrackerFilterProvider>().As<IFilterProvider>().InstancePerLifetimeScope();
         }
     }
 }

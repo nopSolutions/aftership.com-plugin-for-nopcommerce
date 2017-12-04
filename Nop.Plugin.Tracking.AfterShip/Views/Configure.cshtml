@@ -1,39 +1,37 @@
 ﻿@{
-    Layout = "";
+    Layout = "_ConfigurePlugin";
 }
 @model Nop.Plugin.Tracking.AfterShip.Models.ConfigurationModel
-@using Nop.Web.Framework;
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+
+<form asp-controller="TrackingAfterShip" asp-action="Configure" method="post" id="shipping-byweight-form">
     <div class="panel-group">
         <div class="panel panel-default">
             <div class="panel-body">
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.ApiKey)
+                        <nop-label asp-for="ApiKey" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopEditorFor(model => model.ApiKey)
-                        @Html.ValidationMessageFor(model => model.ApiKey)
+                        <nop-editor asp-for="ApiKey" />
+                        <span asp-validation-for="ApiKey"></span>
                     </div>
                 </div>
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.AfterShipUsername)
+                        <nop-label asp-for="AfterShipUsername" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopEditorFor(model => model.AfterShipUsername)
-                        @Html.ValidationMessageFor(model => model.AfterShipUsername)
+                        <nop-editor asp-for="AfterShipUsername" />
+                        <span asp-validation-for="AfterShipUsername"></span>
                     </div>
                 </div>
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.AllowCustomerNotification)
+                        <nop-label asp-for="AllowCustomerNotification" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopEditorFor(model => model.AllowCustomerNotification)
-                        @Html.ValidationMessageFor(model => model.AllowCustomerNotification)
+                        <nop-editor asp-for="AllowCustomerNotification" />
+                        <span asp-validation-for="AllowCustomerNotification"></span>
                     </div>
                 </div>
                 <div class="form-group">
@@ -44,4 +42,4 @@
             </div>
         </div>
     </div>
-}
+</form>
