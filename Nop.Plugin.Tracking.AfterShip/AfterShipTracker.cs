@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using Nop.Core;
 using Nop.Core.Domain.Directory;
-using Nop.Core.Domain.Shipping;
 using Nop.Core.Infrastructure;
 using Nop.Plugin.Tracking.AfterShip.Infrastructure;
 using Nop.Plugin.Tracking.AfterShip.Infrastructure.Aftership;

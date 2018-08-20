@@ -13,7 +13,7 @@ using Nop.Web.Models.Order;
 namespace Nop.Plugin.Tracking.AfterShip.Filters
 {
     public class AfterShipTrackerWebFilterAttribute : ActionFilterAttribute
-    {
+    {        
         #region Methods
 
         public override void OnResultExecuting(ResultExecutingContext filterContext)
@@ -23,6 +23,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
             var shipmentService = EngineContext.Current.Resolve<IShipmentService>();
             var shippingService = EngineContext.Current.Resolve<IShippingService>();
             var shippingSettings = settingService.LoadSetting<ShippingSettings>();
+            var localizationService = EngineContext.Current.Resolve<ILocalizationService>();
 
             var model = (filterContext.Controller as BaseController)?.ViewData.Model as ShipmentDetailsModel;
 
@@ -38,7 +39,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
 
                     if (srcm != null &&
                         srcm.PluginDescriptor.Installed &&
-                        srcm.IsShippingRateComputationMethodActive(shippingSettings))
+                        shippingService.IsShippingRateComputationMethodActive(srcm))
                     {
                         var shipmentTracker = srcm.ShipmentTracker;
                         if (shipmentTracker == null)
@@ -56,7 +57,7 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
                                         var shipmentStatusEventModel = new ShipmentDetailsModel.ShipmentStatusEventModel();
                                         var shipmentEventCountry = countryService.GetCountryByTwoLetterIsoCode(shipmentEvent.CountryCode);
                                         shipmentStatusEventModel.Country = shipmentEventCountry != null
-                                                                               ? shipmentEventCountry.GetLocalized(x => x.Name)
+                                                                               ? localizationService.GetLocalized(shipmentEventCountry, x => x.Name)
                                                                                : shipmentEvent.CountryCode;
                                         shipmentStatusEventModel.Date = shipmentEvent.Date;
                                         shipmentStatusEventModel.EventName = shipmentEvent.EventName;

@@ -13,7 +13,7 @@ using Nop.Services.Logging;
 
 namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
 {
-    public class ModelEventConsumer : IConsumer<EntityUpdated<Shipment>>, IConsumer<EntityInserted<Shipment>>, IConsumer<EntityDeleted<Shipment>>
+    public class ModelEventConsumer : IConsumer<EntityUpdatedEvent<Shipment>>, IConsumer<EntityInsertedEvent<Shipment>>, IConsumer<EntityDeletedEvent<Shipment>>
     {
         #region Fields
 
@@ -41,17 +41,17 @@ namespace Nop.Plugin.Tracking.AfterShip.Infrastructure
 
         #region Methods
 
-        public void HandleEvent(EntityInserted<Shipment> eventMessage)
+        public void HandleEvent(EntityInsertedEvent<Shipment> eventMessage)
         {
             OnShipmentInsert(eventMessage.Entity);
         }
 
-        public void HandleEvent(EntityUpdated<Shipment> eventMessage)
+        public void HandleEvent(EntityUpdatedEvent<Shipment> eventMessage)
         {
             OnShipmentChange(eventMessage.Entity);
         }
 
-        public void HandleEvent(EntityDeleted<Shipment> eventMessage)
+        public void HandleEvent(EntityDeletedEvent<Shipment> eventMessage)
         {
             OnShipmentDeleted(eventMessage.Entity);
         }

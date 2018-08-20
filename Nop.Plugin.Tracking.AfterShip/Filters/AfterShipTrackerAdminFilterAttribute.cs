@@ -1,14 +1,16 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Infrastructure;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Shipping;
 using Nop.Web.Areas.Admin.Controllers;
-using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Web.Framework.Controllers;
+using Nop.Web.Models.Order;
 
 namespace Nop.Plugin.Tracking.AfterShip.Filters
 {
@@ -23,24 +25,29 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
             var shipmentService = EngineContext.Current.Resolve<IShipmentService>();
             var shippingService = EngineContext.Current.Resolve<IShippingService>();
             var shippingSettings = settingService.LoadSetting<ShippingSettings>();
+            var localizationService = EngineContext.Current.Resolve<ILocalizationService>();
+            var dateTimeHelper = EngineContext.Current.Resolve<IDateTimeHelper>();            
 
-            var model = (filterContext.Controller as BaseController)?.ViewData.Model as ShipmentModel;
-
-            //var model = filterContext.Controller.ViewData.Model as Admin.Models.Orders.ShipmentModel;
+            var model = (filterContext.Controller as BaseController)?.ViewData.Model as ShipmentDetailsModel;
 
             if (model != null && !model.ShipmentStatusEvents.Any())
             {
                 var shipment = shipmentService.GetShipmentById(model.Id);
+
+                if (shipment.ShippedDateUtc.HasValue)
+                    model.ShippedDate = dateTimeHelper.ConvertToUserTime(shipment.ShippedDateUtc.Value, DateTimeKind.Utc);
+                if (shipment.DeliveryDateUtc.HasValue)
+                    model.DeliveryDate = dateTimeHelper.ConvertToUserTime(shipment.DeliveryDateUtc.Value, DateTimeKind.Utc);
+
                 if (!string.IsNullOrEmpty(shipment.TrackingNumber))
                 {
                     var afterShipSettings = settingService.LoadSetting<AfterShipSettings>();
                     var order = shipment.Order;
-                    var srcm =
-                        shippingService.LoadShippingRateComputationMethodBySystemName(
-                            order.ShippingRateComputationMethodSystemName);
+                    var srcm = shippingService.LoadShippingRateComputationMethodBySystemName(order.ShippingRateComputationMethodSystemName);
+                    
                     if (srcm != null &&
                         srcm.PluginDescriptor.Installed &&
-                        srcm.IsShippingRateComputationMethodActive(shippingSettings))
+                        shippingService.IsShippingRateComputationMethodActive(srcm))
                     {
                         var shipmentTracker = srcm.ShipmentTracker;
                         if (shipmentTracker == null)
@@ -55,10 +62,10 @@ namespace Nop.Plugin.Tracking.AfterShip.Filters
                                 {
                                     foreach (var shipmentEvent in shipmentEvents)
                                     {
-                                        var shipmentStatusEventModel = new ShipmentModel.ShipmentStatusEventModel();
+                                        var shipmentStatusEventModel = new ShipmentDetailsModel.ShipmentStatusEventModel();
                                         var shipmentEventCountry = countryService.GetCountryByTwoLetterIsoCode(shipmentEvent.CountryCode);
                                         shipmentStatusEventModel.Country = shipmentEventCountry != null
-                                                                               ? shipmentEventCountry.GetLocalized(x => x.Name)
+                                                                               ? localizationService.GetLocalized(shipmentEventCountry, x => x.Name)
                                                                                : shipmentEvent.CountryCode;
                                         shipmentStatusEventModel.Date = shipmentEvent.Date;
                                         shipmentStatusEventModel.EventName = shipmentEvent.EventName;
