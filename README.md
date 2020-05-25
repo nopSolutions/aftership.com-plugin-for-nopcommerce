@@ -7,4 +7,4 @@ AfterShip site: [https://www.aftership.com/](https://www.aftership.com/)
 
 AfterShip API Documentation site: [https://www.aftership.com/docs/api/4/overview](https://www.aftership.com/docs/api/4/overview)
 
-Listing on nopCommerce "extensions and themes" catalog: [https://www.nopcommerce.com/p/2325/aftership.aspx](https://www.nopcommerce.com/p/2325/aftership.aspx)
+Listing on nopCommerce "extensions and themes" catalog: [https://www.nopcommerce.com/aftership](https://www.nopcommerce.com/aftership)
